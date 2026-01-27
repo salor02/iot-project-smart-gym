@@ -18,6 +18,16 @@ menu "WiFi Configuration"
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 endmenu
 
+menu "MQTT Configuration"
+
+    config MQTT_BROKER_URI
+        string "MQTT broker URI"
+        default "mqtt://test.mosquitto.org:8886"
+        help
+            URI to the MQTT broker.
+
+endmenu
+
 menu "DHT Configuration"
     choice DHT_CHIP_TYPE
         prompt "Select chip type"
@@ -62,3 +72,4 @@ menu "Gas Sensors Configuration (MQ-7 and MQ-135)"
         range 0 9
         default 9
 endmenu
+

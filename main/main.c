@@ -8,6 +8,7 @@
 #include "nvs_flash.h"
 #include "wifi.h"
 #include "esp_log.h"
+#include "mqtt.h"
 
 #if defined(CONFIG_DHT_TYPE_DHT11)
 #define DHT_SENSOR_TYPE DHT_TYPE_DHT11
@@ -127,6 +128,9 @@ void app_main()
         vTaskDelay(pdMS_TO_TICKS(10000));
         esp_restart();
     }
+
+    // MQTT initialization
+    mqtt_app_start();
 
     /* ***** SETUP COMPLETED ***** */
 
