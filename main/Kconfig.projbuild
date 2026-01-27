@@ -1,0 +1,64 @@
+menu "WiFi Configuration"
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) to connect to.
+
+    config ESP_WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) to use.
+
+    config ESP_MAXIMUM_RETRY
+        int "Maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+endmenu
+
+menu "DHT Configuration"
+    choice DHT_CHIP_TYPE
+        prompt "Select chip type"
+        default DHT_TYPE_AM2301
+
+        config DHT_TYPE_DHT11
+            bool "DHT11"
+        config DHT_TYPE_AM2301
+            bool "DHT21/DHT22/AM2301/AM2302/AM2321"
+        config DHT_TYPE_SI7021
+            bool "Itead Si7021"
+    endchoice
+endmenu
+
+menu "GPIO Sensors Mapping"
+    config DHT_GPIO
+        int "DHT GPIO number"
+        default 4
+
+    config BUZZER_GPIO
+        int "Buzzer GPIO number"
+        default 5
+
+    config PIR_GPIO
+        int "PIR GPIO number"
+        default 5
+endmenu
+
+menu "Gas Sensors Configuration (MQ-7 and MQ-135)"
+    config ADC_UNIT
+        int "ADC Unit (1 o 2)"
+        range 1 2
+        default 1
+
+    config MQ7_ADC_CHANNEL
+        int "MQ-7 ADC Channel"
+        range 0 9
+        default 8
+
+    config MQ135_ADC_CHANNEL
+        int "MQ-135 ADC Channel"
+        range 0 9
+        default 9
+endmenu
