@@ -62,10 +62,6 @@ esp_err_t wifi_init_sta(void)
 {
     // Event group creation, in order to keep track of the wifi init success or failure
     s_wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    // Initialize TCP/IP stack
-    ESP_ERROR_CHECK(esp_netif_init());
 
     // WiFi station creation
     esp_netif_create_default_wifi_sta();
