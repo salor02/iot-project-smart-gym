@@ -28,6 +28,21 @@ menu "MQTT Configuration"
 
 endmenu
 
+menu "GPIO Mapping"
+
+    config BUZZER_GPIO
+        int "Buzzer GPIO number"
+        default 3
+
+    config PIR_GPIO
+        int "PIR GPIO number"
+        default 4
+    
+    config LED_GPIO
+        int "PIR GPIO number"
+        default 5
+endmenu
+
 menu "SHT3X configuration"
     config SHT3X_ADDR
         hex "I2C address of SHT3x"
@@ -60,15 +75,17 @@ menu "I2C configuration"
             GPIO number for I2C Master data line.
 endmenu
 
-menu "GPIO Sensors Mapping"
+menu "HC-SR501 PIR configuration"
+    config PIR_ACTIVATION_TIME
+        int "Motion sampling time frame (seconds)"
+        range 10 60
+        default 30
+    
+    config PIR_ACTIVATION_RATIO_THRESHOLD
+        int "Activation time ratio requested in the sampling time frame (percentual)"
+        range 0 100
+        default 50
 
-    config BUZZER_GPIO
-        int "Buzzer GPIO number"
-        default 5
-
-    config PIR_GPIO
-        int "PIR GPIO number"
-        default 5
 endmenu
 
 menu "Gas Sensors Configuration (MQ-7 and MQ-135)"

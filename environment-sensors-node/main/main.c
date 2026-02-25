@@ -5,6 +5,7 @@
 #include "driver/uart.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "esp_timer.h"
 #include "esp_adc/adc_oneshot.h"
 #include "nvs_flash.h"
 #include "wifi.h"
@@ -23,28 +24,42 @@ static const char *TAG = "main";
 // this function waits for a data ready event to be raised and then it display the message through the serial monitor
 void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     switch (id) {
-        case EVENT_ENV_DATA_READY: {
-            env_data_t *env_data = (env_data_t*) event_data;
-            printf(" ----- ENVIRONMENT data begin ----- \n");
-            printf("Temperature: %.2f °C, Humidity: %.2f %%\n", env_data->temp, env_data->humidity);
-            printf("MQ-7 (CO): %d | MQ-135 (Air): %d\n", env_data->mq7_val, env_data->mq135_val);
-            printf(" ----- ENVIRONMENT data end ----- \n");
+        // case EVENT_ENV_DATA_READY: {
+        //     env_data_t *env_data = (env_data_t*) event_data;
+        //     printf(" ----- ENVIRONMENT data begin ----- \n");
+        //     printf("Temperature: %.2f °C, Humidity: %.2f %%\n", env_data->temp, env_data->humidity);
+        //     printf("MQ-7 (CO): %d | MQ-135 (Air): %d\n", env_data->mq7_val, env_data->mq135_val);
+        //     printf(" ----- ENVIRONMENT data end ----- \n");
+        //     break;
+        // }
+
+        // case EVENT_PMS_DATA_READY: {
+        //     pms_data_t *pms_data = (pms_data_t*) event_data;
+        //     printf(" ----- PMS5003 data begin ----- \n");
+        //     printf("pm10: %d ug/m3\n", pms_data->pm10);
+        //     printf("pm2.5: %d ug/m3\n", pms_data->pm2_5);
+        //     printf("pm1.0: %d ug/m3\n", pms_data->pm1_0);
+        //     printf("particles > 0.3um / 0.1L: %d\n", pms_data->particles_03um);
+        //     printf("particles > 0.5um / 0.1L: %d\n", pms_data->particles_05um);
+        //     printf("particles > 1.0um / 0.1L: %d\n", pms_data->particles_10um);
+        //     printf("particles > 2.5um / 0.1L: %d\n", pms_data->particles_25um);
+        //     printf("particles > 5.0um / 0.1L: %d\n", pms_data->particles_50um);
+        //     printf("particles > 10.0um / 0.1L: %d\n", pms_data->particles_100um);
+        //     printf(" ----- PMS5003 data end ----- \n");
+        //     break;
+        // }
+
+        case EVENT_MOTION_DETECTED: { 
+            printf(" ----- HC-SR501 PIR data begin ----- \n");
+            printf("Motion detected\n");
+            printf(" ----- HC-SR501 PIR data end ----- \n");
             break;
         }
 
-        case EVENT_PMS_DATA_READY: {
-            pms_data_t *pms_data = (pms_data_t*) event_data;
-            printf(" ----- PMS5003 data begin ----- \n");
-            printf("pm10: %d ug/m3\n", pms_data->pm10);
-            printf("pm2.5: %d ug/m3\n", pms_data->pm2_5);
-            printf("pm1.0: %d ug/m3\n", pms_data->pm1_0);
-            printf("particles > 0.3um / 0.1L: %d\n", pms_data->particles_03um);
-            printf("particles > 0.5um / 0.1L: %d\n", pms_data->particles_05um);
-            printf("particles > 1.0um / 0.1L: %d\n", pms_data->particles_10um);
-            printf("particles > 2.5um / 0.1L: %d\n", pms_data->particles_25um);
-            printf("particles > 5.0um / 0.1L: %d\n", pms_data->particles_50um);
-            printf("particles > 10.0um / 0.1L: %d\n", pms_data->particles_100um);
-            printf(" ----- PMS5003 data end ----- \n");
+        case EVENT_MOTION_STOPPED: {
+            printf(" ----- HC-SR501 PIR data begin ----- \n");
+            printf("Motion stopped\n");
+            printf(" ----- HC-SR501 PIR data end ----- \n");
             break;
         }
     }
@@ -220,29 +235,11 @@ static void pms_task(void *arg) {
     }
 }
 
-void pir_task(void *pvParameters){
-    gpio_reset_pin(CONFIG_PIR_GPIO);
-    gpio_set_direction(CONFIG_PIR_GPIO, GPIO_MODE_INPUT);
+static void IRAM_ATTR pir_isr_handler(void* arg) {
 
-    int previous_state = 0;
-
-    while (1) {
-        int motion = gpio_get_level(CONFIG_PIR_GPIO);
-
-        if(motion && !previous_state){
-            printf("Motion detected!\n");
-            previous_state = !previous_state;
-            continue;
-        }
-        
-        if(!motion && previous_state){
-            printf("Motion stopped!\n\n");
-            previous_state = !previous_state;
-            continue;
-        } 
-
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
+    int32_t current_time = (uint32_t) esp_timer_get_time() / 1000;
+    bool pir_status = gpio_get_level(CONFIG_PIR_GPIO);
+    esp_event_isr_post(SENSOR_EVENTS, pir_status ? EVENT_MOTION_DETECTED : EVENT_MOTION_STOPPED, &current_time, sizeof(current_time), NULL);
 }
 
 void start_sound(void *pvParameters){
@@ -254,6 +251,49 @@ void start_sound(void *pvParameters){
         vTaskDelay(pdMS_TO_TICKS(500));
         gpio_set_level(CONFIG_BUZZER_GPIO, 0);
         vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    vTaskDelete(NULL);
+}
+
+void pir_events_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
+    pir_data_t *pir_data = (pir_data_t*) handler_args;
+    int32_t current_time = *(int32_t*) event_data;
+    int32_t elapsed_time = (current_time - pir_data -> first_start) / 1000;
+
+    if(pir_data -> first_start > 0){
+        if(id == EVENT_MOTION_STOPPED){
+            pir_data -> total_duration += current_time - pir_data -> last_start;
+            ESP_LOGI(TAG, "PIR total activation time in the last %ds: %ds", elapsed_time, (uint32_t) pir_data -> total_duration/1000);
+            gpio_set_level(CONFIG_LED_GPIO, 0);
+        }
+
+        if(elapsed_time > CONFIG_PIR_ACTIVATION_TIME){
+            float activation_ratio = (float) (pir_data -> total_duration / 1000) / elapsed_time;
+            ESP_LOGI(TAG, "PIR total activation ratio in the last %ds : %f%%", elapsed_time, activation_ratio);
+            if(activation_ratio >= (float) CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD / 100){
+                ESP_LOGI(TAG, "PIR activation ratio threshold reached, motion confirmed");
+                esp_event_post(SENSOR_EVENTS, EVENT_PIR_MOTION_CONFIRMED, NULL, 0, 0);
+                xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);;
+            }
+            else{
+                ESP_LOGI(TAG, "Maximum PIR activation time elapsed (%ds), threshold not reached (%d)", CONFIG_PIR_ACTIVATION_TIME, CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD);
+            }
+            memset(pir_data, 0, sizeof(pir_data_t));
+        }
+    }
+
+    if(id == EVENT_MOTION_DETECTED){
+        if(pir_data -> first_start == 0) pir_data -> first_start = current_time;
+        pir_data -> last_start = current_time;
+        gpio_set_level(CONFIG_LED_GPIO, 1);    
+    }
+}
+
+void pir_task(void *pvParameters){
+    while(1) {
+        printf("PIR Raw: %d\n", gpio_get_level(CONFIG_PIR_GPIO));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -288,9 +328,31 @@ void app_main()
     // MQTT initialization
     esp_mqtt_client_handle_t mqtt_client = mqtt_app_start();
 
+    // LED initialization
+    gpio_reset_pin(CONFIG_LED_GPIO);
+    gpio_set_direction(CONFIG_LED_GPIO, GPIO_MODE_OUTPUT);
+    gpio_set_level(CONFIG_LED_GPIO, 0);
+
+    // PIR interrupt configuration
+    gpio_config_t pir_config = {
+        .pin_bit_mask = (1ULL << CONFIG_PIR_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,      // reduces false positives
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_ANYEDGE       // an interrupt will be raised in rising edge (when PIR detect motion)
+    };
+    ESP_ERROR_CHECK(gpio_config(&pir_config));
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));
+    ESP_ERROR_CHECK(gpio_isr_handler_add(CONFIG_PIR_GPIO, pir_isr_handler, NULL));
+
     // events' handlers binding
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
+
+    // pir's events management
+    pir_data_t *pir_data = calloc(1, sizeof(pir_data_t));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_DETECTED, pir_events_handler, (void*) pir_data));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_STOPPED, pir_events_handler, (void*) pir_data));
 
     /* ***** SETUP COMPLETED ***** */
 
