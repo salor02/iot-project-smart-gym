@@ -24,6 +24,7 @@ typedef struct{
     uint64_t first_start;
     uint64_t last_start;
     uint64_t total_duration;
+    esp_timer_handle_t inactivity_timer;
 } pir_data_t;
 
 // events' family declaration
@@ -33,5 +34,6 @@ enum {
     EVENT_PMS_DATA_READY,
     EVENT_MOTION_DETECTED,
     EVENT_MOTION_STOPPED,
-    EVENT_PIR_MOTION_CONFIRMED
+    EVENT_MOTION_CONFIRMED,
+    EVENT_MOTION_TIMEOUT
 };

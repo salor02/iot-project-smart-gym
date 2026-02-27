@@ -248,15 +248,19 @@ void start_sound(void *pvParameters){
 
     for(int i = 0; i < 3; i++){
         gpio_set_level(CONFIG_BUZZER_GPIO, 1);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(200));
         gpio_set_level(CONFIG_BUZZER_GPIO, 0);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 
     vTaskDelete(NULL);
 }
 
-void pir_events_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
+void pir_inactivity_timer_cb(void* arg){    
+    esp_event_post(SENSOR_EVENTS, EVENT_MOTION_TIMEOUT, NULL, 0, 0);
+}
+
+void pir_events_filter_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     pir_data_t *pir_data = (pir_data_t*) handler_args;
     int32_t current_time = *(int32_t*) event_data;
     int32_t elapsed_time = (current_time - pir_data -> first_start) / 1000;
@@ -270,16 +274,17 @@ void pir_events_handler(void* handler_args, esp_event_base_t base, int32_t id, v
 
         if(elapsed_time > CONFIG_PIR_ACTIVATION_TIME){
             float activation_ratio = (float) (pir_data -> total_duration / 1000) / elapsed_time;
-            ESP_LOGI(TAG, "PIR total activation ratio in the last %ds : %f%%", elapsed_time, activation_ratio);
+            ESP_LOGI(TAG, "PIR total activation ratio in the last %ds : %f%%", elapsed_time, activation_ratio * 100);
             if(activation_ratio >= (float) CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD / 100){
                 ESP_LOGI(TAG, "PIR activation ratio threshold reached, motion confirmed");
-                esp_event_post(SENSOR_EVENTS, EVENT_PIR_MOTION_CONFIRMED, NULL, 0, 0);
-                xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);;
+                esp_event_post(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, NULL, 0, 0);
             }
             else{
                 ESP_LOGI(TAG, "Maximum PIR activation time elapsed (%ds), threshold not reached (%d)", CONFIG_PIR_ACTIVATION_TIME, CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD);
             }
-            memset(pir_data, 0, sizeof(pir_data_t));
+            pir_data -> first_start = 0;
+            pir_data -> last_start = 0;
+            pir_data -> total_duration = 0;
         }
     }
 
@@ -287,6 +292,29 @@ void pir_events_handler(void* handler_args, esp_event_base_t base, int32_t id, v
         if(pir_data -> first_start == 0) pir_data -> first_start = current_time;
         pir_data -> last_start = current_time;
         gpio_set_level(CONFIG_LED_GPIO, 1);    
+    }
+}
+
+void pir_events_renewal_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
+    pir_data_t *pir_data = (pir_data_t*) handler_args;
+
+    if(id == EVENT_MOTION_CONFIRMED){
+        uint64_t timeout_us = CONFIG_PIR_TIMEOUT_TIME * 1000000ULL; 
+
+        if(!esp_timer_is_active(pir_data->inactivity_timer)){
+            esp_timer_start_once(pir_data->inactivity_timer, timeout_us);
+            xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+            ESP_LOGI(TAG, "Inactivity timer started, a confirmation is requested in the next %d seconds", CONFIG_PIR_TIMEOUT_TIME);
+        }
+        else{
+            esp_timer_restart(pir_data->inactivity_timer, timeout_us);
+            ESP_LOGI(TAG, "Inactivity timer renewed, another confirmation is requested in the next %d seconds", CONFIG_PIR_TIMEOUT_TIME);
+        }
+    }
+
+    if(id == EVENT_MOTION_TIMEOUT){
+        xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+        ESP_LOGI(TAG, "No motion confirmed in the last %d seconds, timeout reached", CONFIG_PIR_TIMEOUT_TIME);
     }
 }
 
@@ -349,10 +377,20 @@ void app_main()
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
 
-    // pir's events management
+    // PIR events management
     pir_data_t *pir_data = calloc(1, sizeof(pir_data_t));
-    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_DETECTED, pir_events_handler, (void*) pir_data));
-    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_STOPPED, pir_events_handler, (void*) pir_data));
+
+    const esp_timer_create_args_t inactivity_timer_args = {
+        .callback = &pir_inactivity_timer_cb,
+        .arg = pir_data,
+        .name = "pir_inactivity"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&inactivity_timer_args, &pir_data->inactivity_timer));
+
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_DETECTED, pir_events_filter_handler, (void*) pir_data));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_STOPPED, pir_events_filter_handler, (void*) pir_data));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, pir_events_renewal_handler, (void*) pir_data));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_TIMEOUT, pir_events_renewal_handler, (void*) pir_data));
 
     /* ***** SETUP COMPLETED ***** */
 

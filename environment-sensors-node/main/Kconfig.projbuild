@@ -85,6 +85,11 @@ menu "HC-SR501 PIR configuration"
         int "Activation time ratio requested in the sampling time frame (percentual)"
         range 0 100
         default 50
+    
+    config PIR_TIMEOUT_TIME
+        int "Inactivity timeout (seconds)"
+        range PIR_ACTIVATION_TIME 1200
+        default 600
 
 endmenu
 
