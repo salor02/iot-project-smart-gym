@@ -102,6 +102,21 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
     }
 }
 
+// this task is called by another task and produces a sound from the buzzer. It deletes itself upon termination
+void start_sound(void *pvParameters){
+    gpio_reset_pin(CONFIG_BUZZER_GPIO);
+    gpio_set_direction(CONFIG_BUZZER_GPIO, GPIO_MODE_OUTPUT);
+
+    for(int i = 0; i < 3; i++){
+        gpio_set_level(CONFIG_BUZZER_GPIO, 1);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        gpio_set_level(CONFIG_BUZZER_GPIO, 0);
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+
+    vTaskDelete(NULL);
+}
+
 // this task performs all the "fast" readings sequentially
 void env_sensors_task(void *pvParameters){
 
@@ -235,6 +250,7 @@ static void pms_task(void *arg) {
     }
 }
 
+// PIR interrupt callback. It sends a new event regarding the current PIR status, alongside with the current_time data
 static void IRAM_ATTR pir_isr_handler(void* arg) {
 
     int32_t current_time = (uint32_t) esp_timer_get_time() / 1000;
@@ -242,39 +258,45 @@ static void IRAM_ATTR pir_isr_handler(void* arg) {
     esp_event_isr_post(SENSOR_EVENTS, pir_status ? EVENT_MOTION_DETECTED : EVENT_MOTION_STOPPED, &current_time, sizeof(current_time), NULL);
 }
 
-void start_sound(void *pvParameters){
-    gpio_reset_pin(CONFIG_BUZZER_GPIO);
-    gpio_set_direction(CONFIG_BUZZER_GPIO, GPIO_MODE_OUTPUT);
-
-    for(int i = 0; i < 3; i++){
-        gpio_set_level(CONFIG_BUZZER_GPIO, 1);
-        vTaskDelay(pdMS_TO_TICKS(200));
-        gpio_set_level(CONFIG_BUZZER_GPIO, 0);
-        vTaskDelay(pdMS_TO_TICKS(200));
-    }
-
-    vTaskDelete(NULL);
-}
-
+// function called at the termination of the inactivity timer, it sends the timeout event
 void pir_inactivity_timer_cb(void* arg){    
     esp_event_post(SENSOR_EVENTS, EVENT_MOTION_TIMEOUT, NULL, 0, 0);
 }
 
+/*
+    This function is a software filter to avoid false positives produced by the PIR sensor. It's a FSM and do the following:
+    - filter paused motion paused: first start = 0, accepts just the EVENT_MOTION_DETECTED, 
+        on EVENT_MOTION_DETECTED -> filter active motion active
+    - filter active motion active: first start > 0
+        on EVENT_MOTION_STOPPED -> filter active motion paused
+    - filter active motion paused: first start > 0
+        on EVENT_MOTION_DETECTED -> filter active motion active
+    
+    On both filter active motion active AND filter active motion paused, a check is performed based on the configured activation time:
+    - if the elapsed time is not sufficient, the check is ignored
+    - else
+        - if the activation ratio is sufficient -> sends EVENT_MOTION_CONFIRMED
+    whether or not the activation ratio is sufficient the filter is cleared and goes back to filter paused motion paused
+*/
 void pir_events_filter_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     pir_data_t *pir_data = (pir_data_t*) handler_args;
     int32_t current_time = *(int32_t*) event_data;
     int32_t elapsed_time = (current_time - pir_data -> first_start) / 1000;
 
+    // filter active
     if(pir_data -> first_start > 0){
+        // filter active motion active -> filter active motion paused
         if(id == EVENT_MOTION_STOPPED){
             pir_data -> total_duration += current_time - pir_data -> last_start;
             ESP_LOGI(TAG, "PIR total activation time in the last %ds: %ds", elapsed_time, (uint32_t) pir_data -> total_duration/1000);
             gpio_set_level(CONFIG_LED_GPIO, 0);
         }
 
+        // if a sufficient time has elapsed, the check can be performed
         if(elapsed_time > CONFIG_PIR_ACTIVATION_TIME){
             float activation_ratio = (float) (pir_data -> total_duration / 1000) / elapsed_time;
             ESP_LOGI(TAG, "PIR total activation ratio in the last %ds : %f%%", elapsed_time, activation_ratio * 100);
+            // this is the filter's core: if an activation ratio has been reached sends EVENT_MOTION_CONFIRMED
             if(activation_ratio >= (float) CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD / 100){
                 ESP_LOGI(TAG, "PIR activation ratio threshold reached, motion confirmed");
                 esp_event_post(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, NULL, 0, 0);
@@ -282,12 +304,14 @@ void pir_events_filter_handler(void* handler_args, esp_event_base_t base, int32_
             else{
                 ESP_LOGI(TAG, "Maximum PIR activation time elapsed (%ds), threshold not reached (%d)", CONFIG_PIR_ACTIVATION_TIME, CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD);
             }
+            //clear the filter after the preivous check, ready for another check
             pir_data -> first_start = 0;
             pir_data -> last_start = 0;
             pir_data -> total_duration = 0;
         }
     }
 
+    // filter paused motion paused OR filter active motion paused
     if(id == EVENT_MOTION_DETECTED){
         if(pir_data -> first_start == 0) pir_data -> first_start = current_time;
         pir_data -> last_start = current_time;
@@ -295,33 +319,37 @@ void pir_events_filter_handler(void* handler_args, esp_event_base_t base, int32_
     }
 }
 
+/*
+    This function manages the renewal mechanism of the PIR sensor:
+    - on first EVENT_MOTION_CONFIRMED a timer is started and the vision node is turned on
+    - on the following EVENT_MOTION_CONFIRMED the timer is restarted
+    - on the timer expiration (no motion confirmed for a certain configured timeout time) the callback will raise the EVENT_MOTION_TIMEOUT, captured by
+      this handler that will shut down the vision node
+*/
 void pir_events_renewal_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     pir_data_t *pir_data = (pir_data_t*) handler_args;
 
+    // this event is sent by the pir filter
     if(id == EVENT_MOTION_CONFIRMED){
         uint64_t timeout_us = CONFIG_PIR_TIMEOUT_TIME * 1000000ULL; 
 
+        // timer not active -> first motion confirmed
         if(!esp_timer_is_active(pir_data->inactivity_timer)){
             esp_timer_start_once(pir_data->inactivity_timer, timeout_us);
             xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
             ESP_LOGI(TAG, "Inactivity timer started, a confirmation is requested in the next %d seconds", CONFIG_PIR_TIMEOUT_TIME);
         }
         else{
+            // timer already active -> timer is restarted
             esp_timer_restart(pir_data->inactivity_timer, timeout_us);
             ESP_LOGI(TAG, "Inactivity timer renewed, another confirmation is requested in the next %d seconds", CONFIG_PIR_TIMEOUT_TIME);
         }
     }
 
+    // this event is sent by the inactivity timer callback
     if(id == EVENT_MOTION_TIMEOUT){
         xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
         ESP_LOGI(TAG, "No motion confirmed in the last %d seconds, timeout reached", CONFIG_PIR_TIMEOUT_TIME);
-    }
-}
-
-void pir_task(void *pvParameters){
-    while(1) {
-        printf("PIR Raw: %d\n", gpio_get_level(CONFIG_PIR_GPIO));
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -356,6 +384,10 @@ void app_main()
     // MQTT initialization
     esp_mqtt_client_handle_t mqtt_client = mqtt_app_start();
 
+    // events' handlers binding
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
+
     // LED initialization
     gpio_reset_pin(CONFIG_LED_GPIO);
     gpio_set_direction(CONFIG_LED_GPIO, GPIO_MODE_OUTPUT);
@@ -365,21 +397,18 @@ void app_main()
     gpio_config_t pir_config = {
         .pin_bit_mask = (1ULL << CONFIG_PIR_GPIO),
         .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,      // reduces false positives
-        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .pull_up_en = GPIO_PULLUP_DISABLE,      
+        .pull_down_en = GPIO_PULLDOWN_ENABLE, // reduces false positives
         .intr_type = GPIO_INTR_ANYEDGE       // an interrupt will be raised in rising edge (when PIR detect motion)
     };
     ESP_ERROR_CHECK(gpio_config(&pir_config));
     ESP_ERROR_CHECK(gpio_install_isr_service(0));
     ESP_ERROR_CHECK(gpio_isr_handler_add(CONFIG_PIR_GPIO, pir_isr_handler, NULL));
 
-    // events' handlers binding
-    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
-
-    // PIR events management
+    // PIR status initialization, it is useful for the filtering and renewal mechanism
     pir_data_t *pir_data = calloc(1, sizeof(pir_data_t));
 
+    // PIR inactivy timer creation
     const esp_timer_create_args_t inactivity_timer_args = {
         .callback = &pir_inactivity_timer_cb,
         .arg = pir_data,
@@ -387,6 +416,7 @@ void app_main()
     };
     ESP_ERROR_CHECK(esp_timer_create(&inactivity_timer_args, &pir_data->inactivity_timer));
 
+    // PIR events binding
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_DETECTED, pir_events_filter_handler, (void*) pir_data));
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_STOPPED, pir_events_filter_handler, (void*) pir_data));
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, pir_events_renewal_handler, (void*) pir_data));
@@ -396,8 +426,6 @@ void app_main()
 
     /* ***** TASKS DECLARATION ***** */
 
-    // start_sound();
     xTaskCreate(env_sensors_task, "env_sensors_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     xTaskCreate(pms_task, "pms_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    // xTaskCreate(pir_task, "pir_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
 }
