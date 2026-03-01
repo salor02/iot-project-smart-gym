@@ -1,0 +1,16 @@
+menu "PMSX003 configuration"
+    config INDOOR_MODE
+        bool "Use Indoor Calibration (CF=1)"
+        default n
+        help
+            If selected, reads PM (CF=1, Standard Particle).
+            If not selected (default), reads PM (Atmospheric Environment).
+            
+            Enable this for lab/clean room usage.
+            Disable this for normal outdoor/indoor air monitoring.
+    
+    config PMS_MAX_RETRY
+        int "Max number of retries before giving up on a sensor reading"
+        range 1 5
+        default 3
+endmenu

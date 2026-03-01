@@ -41,6 +41,29 @@ menu "GPIO Mapping"
     config LED_GPIO
         int "PIR GPIO number"
         default 5
+
+    config PMS_UART_PORT
+        int "PMS UART Port (1 o 2)"
+        range 1 2
+        default 1
+
+    config PMS_TX_GPIO
+        int "PMS TX GPIO"
+        default 11
+        help
+            Connect RX pin of PMS sensor to this GPIO
+
+    config PMS_RX_GPIO
+        int "PMS RX GPIO"
+        default 12
+        help
+            Connect TX pin of PMS sensor to this GPIO
+
+    config PMS_SET_GPIO
+        int "PMS SET GPIO"
+        default 13
+        help
+            Connect SET pin of PMS sensor to this GPIO
 endmenu
 
 menu "SHT3X configuration"
@@ -75,24 +98,6 @@ menu "I2C configuration"
             GPIO number for I2C Master data line.
 endmenu
 
-menu "HC-SR501 PIR configuration"
-    config PIR_ACTIVATION_TIME
-        int "Motion sampling time frame (seconds)"
-        range 10 60
-        default 30
-    
-    config PIR_ACTIVATION_RATIO_THRESHOLD
-        int "Activation time ratio requested in the sampling time frame (percentual)"
-        range 0 100
-        default 50
-    
-    config PIR_TIMEOUT_TIME
-        int "Inactivity timeout (seconds)"
-        range PIR_ACTIVATION_TIME 1200
-        default 600
-
-endmenu
-
 menu "Gas Sensors Configuration (MQ-7 and MQ-135)"
     config ADC_UNIT
         int "ADC Unit (1 o 2)"
@@ -108,45 +113,5 @@ menu "Gas Sensors Configuration (MQ-7 and MQ-135)"
         int "MQ-135 ADC Channel"
         range 0 9
         default 9
-endmenu
-
-menu "PMSX003 configuration"
-    config UART_PORT
-        int "UART Port (1 o 2)"
-        range 1 2
-        default 1
-
-    config TX_GPIO
-        int "TX GPIO"
-        default 11
-        help
-            Connect RX pin of PMS sensor to this GPIO
-
-    config RX_GPIO
-        int "RX GPIO"
-        default 12
-        help
-            Connect TX pin of PMS sensor to this GPIO
-
-    config SET_GPIO
-        int "SET GPIO"
-        default 13
-        help
-            Connect SET pin of PMS sensor to this GPIO
-    
-    config INDOOR_MODE
-        bool "Use Indoor Calibration (CF=1)"
-        default n
-        help
-            If selected, reads PM (CF=1, Standard Particle).
-            If not selected (default), reads PM (Atmospheric Environment).
-            
-            Enable this for lab/clean room usage.
-            Disable this for normal outdoor/indoor air monitoring.
-    
-    config PMS_MAX_RETRY
-        int "Max number of retries before giving up on a sensor reading"
-        range 1 5
-        default 3
 endmenu
 

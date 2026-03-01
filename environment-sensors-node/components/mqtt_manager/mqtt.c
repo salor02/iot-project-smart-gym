@@ -22,10 +22,8 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_system.h"
-#include "nvs_flash.h"
 #include "sdkconfig.h"
 
-#include "esp_crt_bundle.h"
 #include "mqtt_client.h"
 
 static const char *TAG = "mqtt";
