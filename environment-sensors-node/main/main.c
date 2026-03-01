@@ -62,6 +62,20 @@ void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id
             printf(" ----- HC-SR501 PIR data end ----- \n");
             break;
         }
+
+        case EVENT_MOTION_CONFIRMED: { 
+            printf(" ----- HC-SR501 PIR data begin ----- \n");
+            printf("Motion confirmed\n");
+            printf(" ----- HC-SR501 PIR data end ----- \n");
+            break;
+        }
+
+        case EVENT_MOTION_TIMEOUT: {
+            printf(" ----- HC-SR501 PIR data begin ----- \n");
+            printf("Motion timeout\n");
+            printf(" ----- HC-SR501 PIR data end ----- \n");
+            break;
+        }
     }
 }
 
@@ -71,7 +85,6 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
     esp_mqtt_client_handle_t mqtt_client = (esp_mqtt_client_handle_t) handler_args;
     
     char json_buffer[128];
-    int msg_id;
         
     // format the MQTT message based on the received message's type and then publish it
     switch (id) {
@@ -83,7 +96,7 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
                 env_data->temp, env_data->humidity, 
                 env_data->mq7_val, env_data->mq135_val);
             
-            msg_id = esp_mqtt_client_publish(mqtt_client, "sensors/environment", json_buffer, 0, 1, 0);
+            esp_mqtt_client_publish(mqtt_client, "sensors/environment", json_buffer, 0, 1, 0);
             break;
         }
 
@@ -94,7 +107,19 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
                 "{\"pm1_0\": %d, \"pm2_5\": %d, \"pm10\": %d}", 
                 pms_data->pm1_0, pms_data->pm2_5, pms_data->pm10);
             
-            msg_id = esp_mqtt_client_publish(mqtt_client, "sensors/air_quality", json_buffer, 0, 1, 0);
+            esp_mqtt_client_publish(mqtt_client, "sensors/air_quality", json_buffer, 0, 1, 0);
+            break;
+        }
+
+        case EVENT_MOTION_CONFIRMED: {
+            snprintf(json_buffer, sizeof(json_buffer), "{\"motion\": true}");
+            esp_mqtt_client_publish(mqtt_client, "sensors/pir", json_buffer, 0, 1, 0);
+            break;
+        }
+
+        case EVENT_MOTION_TIMEOUT: {
+            snprintf(json_buffer, sizeof(json_buffer), "{\"motion\": false}");
+            esp_mqtt_client_publish(mqtt_client, "sensors/pir", json_buffer, 0, 1, 0);
             break;
         }
     }
