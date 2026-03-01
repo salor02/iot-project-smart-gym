@@ -24,30 +24,30 @@ static const char *TAG = "main";
 // this function waits for a data ready event to be raised and then it display the message through the serial monitor
 void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     switch (id) {
-        // case EVENT_ENV_DATA_READY: {
-        //     env_data_t *env_data = (env_data_t*) event_data;
-        //     printf(" ----- ENVIRONMENT data begin ----- \n");
-        //     printf("Temperature: %.2f °C, Humidity: %.2f %%\n", env_data->temp, env_data->humidity);
-        //     printf("MQ-7 (CO): %d | MQ-135 (Air): %d\n", env_data->mq7_val, env_data->mq135_val);
-        //     printf(" ----- ENVIRONMENT data end ----- \n");
-        //     break;
-        // }
+        case EVENT_ENV_DATA_READY: {
+            env_data_t *env_data = (env_data_t*) event_data;
+            printf(" ----- ENVIRONMENT data begin ----- \n");
+            printf("Temperature: %.2f °C, Humidity: %.2f %%\n", env_data->temp, env_data->humidity);
+            printf("MQ-7 (CO): %d | MQ-135 (Air): %d\n", env_data->mq7_val, env_data->mq135_val);
+            printf(" ----- ENVIRONMENT data end ----- \n");
+            break;
+        }
 
-        // case EVENT_PMS_DATA_READY: {
-        //     pms_data_t *pms_data = (pms_data_t*) event_data;
-        //     printf(" ----- PMS5003 data begin ----- \n");
-        //     printf("pm10: %d ug/m3\n", pms_data->pm10);
-        //     printf("pm2.5: %d ug/m3\n", pms_data->pm2_5);
-        //     printf("pm1.0: %d ug/m3\n", pms_data->pm1_0);
-        //     printf("particles > 0.3um / 0.1L: %d\n", pms_data->particles_03um);
-        //     printf("particles > 0.5um / 0.1L: %d\n", pms_data->particles_05um);
-        //     printf("particles > 1.0um / 0.1L: %d\n", pms_data->particles_10um);
-        //     printf("particles > 2.5um / 0.1L: %d\n", pms_data->particles_25um);
-        //     printf("particles > 5.0um / 0.1L: %d\n", pms_data->particles_50um);
-        //     printf("particles > 10.0um / 0.1L: %d\n", pms_data->particles_100um);
-        //     printf(" ----- PMS5003 data end ----- \n");
-        //     break;
-        // }
+        case EVENT_PMS_DATA_READY: {
+            pms_data_t *pms_data = (pms_data_t*) event_data;
+            printf(" ----- PMS5003 data begin ----- \n");
+            printf("pm10: %d ug/m3\n", pms_data->pm10);
+            printf("pm2.5: %d ug/m3\n", pms_data->pm2_5);
+            printf("pm1.0: %d ug/m3\n", pms_data->pm1_0);
+            printf("particles > 0.3um / 0.1L: %d\n", pms_data->particles_03um);
+            printf("particles > 0.5um / 0.1L: %d\n", pms_data->particles_05um);
+            printf("particles > 1.0um / 0.1L: %d\n", pms_data->particles_10um);
+            printf("particles > 2.5um / 0.1L: %d\n", pms_data->particles_25um);
+            printf("particles > 5.0um / 0.1L: %d\n", pms_data->particles_50um);
+            printf("particles > 10.0um / 0.1L: %d\n", pms_data->particles_100um);
+            printf(" ----- PMS5003 data end ----- \n");
+            break;
+        }
 
         case EVENT_MOTION_DETECTED: { 
             printf(" ----- HC-SR501 PIR data begin ----- \n");
@@ -84,7 +84,6 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
                 env_data->mq7_val, env_data->mq135_val);
             
             msg_id = esp_mqtt_client_publish(mqtt_client, "sensors/environment", json_buffer, 0, 1, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             break;
         }
 
@@ -96,7 +95,6 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
                 pms_data->pm1_0, pms_data->pm2_5, pms_data->pm10);
             
             msg_id = esp_mqtt_client_publish(mqtt_client, "sensors/air_quality", json_buffer, 0, 1, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             break;
         }
     }
@@ -149,19 +147,36 @@ void env_sensors_task(void *pvParameters){
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, (adc_channel_t)CONFIG_MQ7_ADC_CHANNEL, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, (adc_channel_t)CONFIG_MQ135_ADC_CHANNEL, &config));
 
-
     env_data_t env_data;
+    esp_err_t err;
 
     while (1) {
         // SHT31 reading
         sht3x_measure(&dev, &env_data.temp, &env_data.humidity);
 
         // gas sensors reading (ADC)
-        adc_oneshot_read(adc_handle, CONFIG_MQ7_ADC_CHANNEL, &env_data.mq7_val);
-        adc_oneshot_read(adc_handle, CONFIG_MQ135_ADC_CHANNEL, &env_data.mq135_val);
+        err = adc_oneshot_read(adc_handle, CONFIG_MQ7_ADC_CHANNEL, &env_data.mq7_val);
+        if(err != ESP_OK){
+            ESP_LOGW(TAG, "adc mq7 read failed: %s", esp_err_to_name(err));
+            continue;
+        }
+        err = adc_oneshot_read(adc_handle, CONFIG_MQ135_ADC_CHANNEL, &env_data.mq135_val);
+        if(err != ESP_OK){
+            ESP_LOGW(TAG, "adc mq135 read failed: %s", esp_err_to_name(err));
+            continue;
+        }
 
-        // raise the data ready event, if the event queue is full return an error
-        esp_event_post(SENSOR_EVENTS, EVENT_ENV_DATA_READY, &env_data, sizeof(env_data), 0);
+        /*
+            Raise the data ready event, if the event queue is full return an error. 
+            Please note: if there was an error during the reading of the MQx sensors, this event will not be raised.
+        */
+        esp_err_t err = esp_event_post(SENSOR_EVENTS, EVENT_ENV_DATA_READY, &env_data, sizeof(env_data), 0);
+        if(err != ESP_OK){
+            ESP_LOGW(TAG, "error sending the EVENT_ENV_DATA_READY");
+            continue;
+        }
+
+        ESP_LOGI(TAG, "environment sensors EVENT_ENV_DATA_READY sent");
         
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
@@ -179,11 +194,11 @@ static void pms_task(void *arg) {
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
     };
-    uart_param_config(CONFIG_UART_PORT, &uart_config);
-    uart_set_pin(CONFIG_UART_PORT, CONFIG_TX_GPIO, CONFIG_RX_GPIO, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    ESP_ERROR_CHECK(uart_param_config(CONFIG_UART_PORT, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(CONFIG_UART_PORT, CONFIG_TX_GPIO, CONFIG_RX_GPIO, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     
     // it is expected only to receive data, this is the reason why the RX buffer is 2048 and the TX is 0
-    uart_driver_install(CONFIG_UART_PORT, 2048, 0, 0, NULL, 0);
+    ESP_ERROR_CHECK(uart_driver_install(CONFIG_UART_PORT, 2048, 0, 0, NULL, 0));
 
     #ifdef CONFIG_INDOOR_MODE
         int start_byte = 4;
@@ -192,9 +207,9 @@ static void pms_task(void *arg) {
     #endif
 
     // set the SET pin mode, this pin allows to turn the sensor on and off
-    gpio_reset_pin(CONFIG_SET_GPIO);
-    gpio_set_direction(CONFIG_SET_GPIO, GPIO_MODE_OUTPUT);
-    gpio_set_level(CONFIG_SET_GPIO, 0);
+    ESP_ERROR_CHECK(gpio_reset_pin(CONFIG_SET_GPIO));
+    ESP_ERROR_CHECK(gpio_set_direction(CONFIG_SET_GPIO, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_level(CONFIG_SET_GPIO, 0));
 
     // message type for this function will always be PM
     pms_data_t pms_data;
@@ -206,41 +221,48 @@ static void pms_task(void *arg) {
         gpio_set_level(CONFIG_SET_GPIO, 1);
         vTaskDelay(pdMS_TO_TICKS(30000));
         
-        // flush the frame queue in order to read just the last produced frame (wait for 5s if it's not available yet)
-        uart_flush(CONFIG_UART_PORT);
-        int len = uart_read_bytes(CONFIG_UART_PORT, data, 32, pdMS_TO_TICKS(5000));
-        
-        // lenght and header check
-        if (len == 32 && data[0] == 0x42 && data[1] == 0x4D) {
-
-            // checksum (this sum shall be the same as the value contained in the last 2 bytes of the frame)
-            uint16_t checksum = 0;
-            for (int i = 0; i < 30; i++) checksum += data[i];
+        // retry to read the sensor in case of a checksum error or header/length error, for a limited number of times
+        for(int retry = 0; retry < CONFIG_PMS_MAX_RETRY; retry++){
+            // flush the frame queue in order to read just the last produced frame (wait for 5s if it's not available yet)
+            uart_flush(CONFIG_UART_PORT);
+            int len = uart_read_bytes(CONFIG_UART_PORT, data, 32, pdMS_TO_TICKS(5000));
             
-            // if checksum is correct, proceed to the actual reading
-            if (checksum == (data[30] << 8 | data[31])) {
+            // lenght and header check
+            if (len == 32 && data[0] == 0x42 && data[1] == 0x4D) {
 
-                // see the PMS5003 datasheet to know the byte ordering 
-                pms_data = (pms_data_t) {
-                    .pm1_0 = ((data[start_byte]<<8) + data[start_byte+1]),
-                    .pm2_5 = ((data[start_byte+2]<<8) + data[start_byte+3]),
-                    .pm10 = ((data[start_byte+4]<<8) + data[start_byte+5]),
-                    .particles_03um = ((data[16]<<8) + data[17]),
-                    .particles_05um = ((data[18]<<8) + data[19]), 
-                    .particles_10um = ((data[20]<<8) + data[21]), 
-                    .particles_25um = ((data[22]<<8) + data[23]), 
-                    .particles_50um = ((data[24]<<8) + data[25]), 
-                    .particles_100um = ((data[26]<<8) + data[27])
-                };
+                // checksum (this sum shall be the same as the value contained in the last 2 bytes of the frame)
+                uint16_t checksum = 0;
+                for (int i = 0; i < 30; i++) checksum += data[i];
+                
+                // if checksum is correct, proceed to the actual reading
+                if (checksum == (data[30] << 8 | data[31])) {
 
-                // raise the data ready event, if the event queue is full return an error
-                esp_event_post(SENSOR_EVENTS, EVENT_PMS_DATA_READY, &pms_data, sizeof(pms_data), 0);
+                    // see the PMS5003 datasheet to know the byte ordering 
+                    pms_data = (pms_data_t) {
+                        .pm1_0 = ((data[start_byte]<<8) + data[start_byte+1]),
+                        .pm2_5 = ((data[start_byte+2]<<8) + data[start_byte+3]),
+                        .pm10 = ((data[start_byte+4]<<8) + data[start_byte+5]),
+                        .particles_03um = ((data[16]<<8) + data[17]),
+                        .particles_05um = ((data[18]<<8) + data[19]), 
+                        .particles_10um = ((data[20]<<8) + data[21]), 
+                        .particles_25um = ((data[22]<<8) + data[23]), 
+                        .particles_50um = ((data[24]<<8) + data[25]), 
+                        .particles_100um = ((data[26]<<8) + data[27])
+                    };
 
+                    // raise the data ready event, if the event queue is full return an error
+                    esp_err_t err = esp_event_post(SENSOR_EVENTS, EVENT_PMS_DATA_READY, &pms_data, sizeof(pms_data), 0);
+                    if(err != ESP_OK){
+                        ESP_LOGW(TAG, "error sending the EVENT_PMS_DATA_READY");
+                    }
+                    break;
+
+                } else {
+                    ESP_LOGW(TAG, "Checksum error");
+                }
             } else {
-                ESP_LOGE(TAG, "Checksum error");
+                ESP_LOGW(TAG, "Error in frame reading (frame's header or lenght is wrong), (attempt n. %d)", retry);
             }
-        } else {
-            ESP_LOGE(TAG, "Error in frame reading (frame's header or lenght is wrong)");
         }
 
         // sleep sensor, the next reading will be in 30 seconds
@@ -252,15 +274,21 @@ static void pms_task(void *arg) {
 
 // PIR interrupt callback. It sends a new event regarding the current PIR status, alongside with the current_time data
 static void IRAM_ATTR pir_isr_handler(void* arg) {
-
     int32_t current_time = (uint32_t) esp_timer_get_time() / 1000;
     bool pir_status = gpio_get_level(CONFIG_PIR_GPIO);
-    esp_event_isr_post(SENSOR_EVENTS, pir_status ? EVENT_MOTION_DETECTED : EVENT_MOTION_STOPPED, &current_time, sizeof(current_time), NULL);
+
+    esp_err_t err = esp_event_isr_post(SENSOR_EVENTS, pir_status ? EVENT_MOTION_DETECTED : EVENT_MOTION_STOPPED, &current_time, sizeof(current_time), NULL);
+    if(err != ESP_OK){
+        ESP_LOGW(TAG, "error sending the EVENT_MOTION_DETECTED/STOPPED");
+    }
 }
 
 // function called at the termination of the inactivity timer, it sends the timeout event
 void pir_inactivity_timer_cb(void* arg){    
-    esp_event_post(SENSOR_EVENTS, EVENT_MOTION_TIMEOUT, NULL, 0, 0);
+    esp_err_t err = esp_event_post(SENSOR_EVENTS, EVENT_MOTION_TIMEOUT, NULL, 0, 0);
+    if(err != ESP_OK){
+        ESP_LOGW(TAG, "error sending the EVENT_MOTION_TIMEOUT");
+    }
 }
 
 /*
@@ -299,7 +327,10 @@ void pir_events_filter_handler(void* handler_args, esp_event_base_t base, int32_
             // this is the filter's core: if an activation ratio has been reached sends EVENT_MOTION_CONFIRMED
             if(activation_ratio >= (float) CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD / 100){
                 ESP_LOGI(TAG, "PIR activation ratio threshold reached, motion confirmed");
-                esp_event_post(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, NULL, 0, 0);
+                esp_err_t err = esp_event_post(SENSOR_EVENTS, EVENT_MOTION_CONFIRMED, NULL, 0, 0);
+                if(err != ESP_OK){
+                    ESP_LOGW(TAG, "error sending the EVENT_MOTION_CONFIRMED");
+                }
             }
             else{
                 ESP_LOGI(TAG, "Maximum PIR activation time elapsed (%ds), threshold not reached (%d)", CONFIG_PIR_ACTIVATION_TIME, CONFIG_PIR_ACTIVATION_RATIO_THRESHOLD);
@@ -389,9 +420,9 @@ void app_main()
     ESP_ERROR_CHECK(esp_event_handler_register(SENSOR_EVENTS, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
 
     // LED initialization
-    gpio_reset_pin(CONFIG_LED_GPIO);
-    gpio_set_direction(CONFIG_LED_GPIO, GPIO_MODE_OUTPUT);
-    gpio_set_level(CONFIG_LED_GPIO, 0);
+    ESP_ERROR_CHECK(gpio_reset_pin(CONFIG_LED_GPIO));
+    ESP_ERROR_CHECK(gpio_set_direction(CONFIG_LED_GPIO, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_level(CONFIG_LED_GPIO, 0));
 
     // PIR interrupt configuration
     gpio_config_t pir_config = {

@@ -143,5 +143,10 @@ menu "PMSX003 configuration"
             
             Enable this for lab/clean room usage.
             Disable this for normal outdoor/indoor air monitoring.
+    
+    config PMS_MAX_RETRY
+        int "Max number of retries before giving up on a sensor reading"
+        range 1 5
+        default 3
 endmenu
 
