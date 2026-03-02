@@ -6,6 +6,8 @@
 #include "esp_log.h"
 
 #include "pms.h"
+#include "moving_avarage.h"
+#include "sdkconfig.h"
 
 ESP_EVENT_DEFINE_BASE(PMS_EVENT);
 
@@ -55,6 +57,19 @@ void pms_task(void *pvParameters) {
     ESP_ERROR_CHECK(gpio_set_direction(SET_PIN, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_level(SET_PIN, 0));
 
+    // moving avarage filter initialization for each sensor data type
+    static float pm1_0_buf[CONFIG_PMS_SAMPLE_SIZE];
+    static ma_filter_t pm1_0_filter;
+    ma_init(&pm1_0_filter, pm1_0_buf, CONFIG_PMS_SAMPLE_SIZE);
+
+    static float pm2_5_buf[CONFIG_PMS_SAMPLE_SIZE];
+    static ma_filter_t pm2_5_filter;
+    ma_init(&pm2_5_filter, pm2_5_buf, CONFIG_PMS_SAMPLE_SIZE);
+
+    static float pm10_buf[CONFIG_PMS_SAMPLE_SIZE];
+    static ma_filter_t pm10_filter;
+    ma_init(&pm10_filter, pm10_buf, CONFIG_PMS_SAMPLE_SIZE);
+
     // message type for this function will always be PM
     pms_data_t pms_data;
     uint8_t data[32];
@@ -83,9 +98,9 @@ void pms_task(void *pvParameters) {
 
                     // see the PMS5003 datasheet to know the byte ordering 
                     pms_data = (pms_data_t) {
-                        .pm1_0 = ((data[START_BYTE]<<8) + data[START_BYTE+1]),
-                        .pm2_5 = ((data[START_BYTE+2]<<8) + data[START_BYTE+3]),
-                        .pm10 = ((data[START_BYTE+4]<<8) + data[START_BYTE+5]),
+                        .pm1_0 = ma_update(&pm1_0_filter, (data[START_BYTE]<<8) + data[START_BYTE+1]),
+                        .pm2_5 = ma_update(&pm2_5_filter, (data[START_BYTE+2]<<8) + data[START_BYTE+3]),
+                        .pm10 = ma_update(&pm10_filter, (data[START_BYTE+4]<<8) + data[START_BYTE+5]),
                         .particles_03um = ((data[16]<<8) + data[17]),
                         .particles_05um = ((data[18]<<8) + data[19]), 
                         .particles_10um = ((data[20]<<8) + data[21]), 
@@ -105,7 +120,7 @@ void pms_task(void *pvParameters) {
                     ESP_LOGW(TAG, "Checksum error");
                 }
             } else {
-                ESP_LOGW(TAG, "Error in frame reading (frame's header or lenght is wrong), (attempt n. %d)", retry);
+                ESP_LOGW(TAG, "Error in frame reading (frame's header or lenght is wrong), (attempt n. %d)", retry+1);
             }
         }
 

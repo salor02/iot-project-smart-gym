@@ -13,4 +13,9 @@ menu "PMSX003 configuration"
         int "Max number of retries before giving up on a sensor reading"
         range 1 5
         default 3
+
+    config PMS_SAMPLE_SIZE
+        int "Number of previous measurements to keep in the moving avarage calculation (1 = filter OFF)"
+        range 1 20
+        default 6
 endmenu

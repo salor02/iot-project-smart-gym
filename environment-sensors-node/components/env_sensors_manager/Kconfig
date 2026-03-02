@@ -1,0 +1,6 @@
+menu "Environment sensors configuration"
+    config ENV_SAMPLE_SIZE
+    int "Number of previous measurements to keep in the moving avarage calculation (1 = filter OFF)"
+    range 1 20
+    default 6
+endmenu

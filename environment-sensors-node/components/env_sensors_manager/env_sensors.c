@@ -8,6 +8,8 @@
 #include "sht3x.h"
 
 #include "env_sensors.h"
+#include "moving_avarage.h"
+#include "sdkconfig.h"
 
 ESP_EVENT_DEFINE_BASE(ENV_SENSORS_EVENT); 
 
@@ -61,30 +63,55 @@ esp_err_t gas_sensors_init(int8_t adc_unit, uint8_t mq7_channel, uint8_t mq135_c
 
 // this task performs all the "fast" readings sequentially
 void env_sensors_task(void *pvParameters){
+
+    // moving avarage filter initialization for each sensor data type
+    static float temp_buf[CONFIG_ENV_SAMPLE_SIZE];
+    static ma_filter_t temp_filter;
+    ma_init(&temp_filter, temp_buf, CONFIG_ENV_SAMPLE_SIZE);
+
+    static float humidity_buf[CONFIG_ENV_SAMPLE_SIZE];
+    static ma_filter_t humidity_filter;
+    ma_init(&humidity_filter, humidity_buf, CONFIG_ENV_SAMPLE_SIZE);
+
+    static float co_buf[CONFIG_ENV_SAMPLE_SIZE];
+    static ma_filter_t co_filter;
+    ma_init(&co_filter, co_buf, CONFIG_ENV_SAMPLE_SIZE);
+
+    static float air_buf[CONFIG_ENV_SAMPLE_SIZE];
+    static ma_filter_t air_filter;
+    ma_init(&air_filter, air_buf, CONFIG_ENV_SAMPLE_SIZE);
+
     while (1) {
-        env_data_t env_data;
+        env_data_t env_data_raw;
+        env_data_t env_data_filtered;
         esp_err_t err;
 
         // SHT31 reading
-        sht3x_measure(&dev, &env_data.temp, &env_data.humidity);
+        sht3x_measure(&dev, &env_data_raw.temp, &env_data_raw.humidity);
 
         // gas sensors reading (ADC)
-        err = adc_oneshot_read(adc_handle, MQ7_ADC_CHANNEL, &env_data.mq7_val);
+        err = adc_oneshot_read(adc_handle, MQ7_ADC_CHANNEL, &env_data_raw.mq7_val);
         if(err != ESP_OK){
             ESP_LOGW(TAG, "adc mq7 read failed: %s", esp_err_to_name(err));
             continue;
         }
-        err = adc_oneshot_read(adc_handle, MQ135_ADC_CHANNEL, &env_data.mq135_val);
+        err = adc_oneshot_read(adc_handle, MQ135_ADC_CHANNEL, &env_data_raw.mq135_val);
         if(err != ESP_OK){
             ESP_LOGW(TAG, "adc mq135 read failed: %s", esp_err_to_name(err));
             continue;
         }
 
+        // the raw data read by the sensors are now filtered by the moving avarage update step
+        env_data_filtered.temp = ma_update(&temp_filter, env_data_raw.temp);
+        env_data_filtered.humidity = ma_update(&humidity_filter, env_data_raw.humidity);
+        env_data_filtered.mq7_val = ma_update(&co_filter, env_data_raw.mq7_val);
+        env_data_filtered.mq135_val = ma_update(&air_filter, env_data_raw.mq135_val);
+
         /*
             Raise the data ready event, if the event queue is full return an error. 
             Please note: if there was an error during the reading of the MQx sensors, this event will not be raised.
         */
-        err = esp_event_post(ENV_SENSORS_EVENT, EVENT_ENV_DATA_READY, &env_data, sizeof(env_data), 0);
+        err = esp_event_post(ENV_SENSORS_EVENT, EVENT_ENV_DATA_READY, &env_data_filtered, sizeof(env_data_filtered), 0);
         if(err != ESP_OK){
             ESP_LOGW(TAG, "error sending the EVENT_ENV_DATA_READY");
             continue;
