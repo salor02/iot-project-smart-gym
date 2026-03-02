@@ -10,7 +10,6 @@
 #include "nvs_flash.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
-#include "esp_https_ota.h"
 
 #include "wifi.h"
 #include "mqtt.h"
@@ -20,6 +19,19 @@
 #define SDCARD_MOUNT_POINT "/sdcard"
 
 static const char *TAG = "main";
+
+// this function handles the events raised by the MQTT manager
+static void mqtt_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data) {
+    mqtt_msg_t *msg = (mqtt_msg_t *)event_data;
+    
+    if (strcmp(msg->topic, "vision/ota") == 0) {
+        if (strcmp(msg->payload, "start") == 0) {
+            ESP_LOGI(TAG, "Received MQTT OTA command (%s)", msg->payload);
+            xTaskCreate(&ota_request_update, "ota_update", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
+            mqtt_manager_publish("vision/ota", "update_started");
+        }
+    }
+}
 
 void app_main(void){
     /* ***** INITIAL SETUP ***** */
@@ -46,13 +58,22 @@ void app_main(void){
     }
 
     // MQTT initialization
-    // esp_mqtt_client_handle_t mqtt_client = mqtt_app_start();
+    mqtt_manager_config_t mqtt_config = {
+        .broker_uri = CONFIG_MQTT_BROKER_URI,
+        .subscribe_topics = {
+            "vision/record",
+            "vision/ota"
+        },
+        .num_topics = 2
+    };
+    mqtt_manager_init(&mqtt_config);
 
     // SD card initialization
-    // ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));
+    ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));
 
-    // OTA update initialization
-    esp_https_ota_config_t config = ota_init(CONFIG_OTA_HTTP_SERVER_URL);
+    // Events binding
+    esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_handler, NULL);
+
 
     /* ***** SETUP COMPLETED ***** */
 

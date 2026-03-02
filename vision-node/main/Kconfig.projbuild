@@ -27,11 +27,3 @@ menu "MQTT Configuration"
             URI to the MQTT broker.
 
 endmenu
-
-menu "OTA Configuration"
-
-    config OTA_HTTP_SERVER_URL
-        string "HTTP server URL"
-        default "http://192.168.1.252:8070/vision-node.bin"
-
-endmenu
