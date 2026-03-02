@@ -13,6 +13,9 @@
 
 #include "wifi.h"
 #include "mqtt.h"
+#include "sdcard.h"
+
+#define SDCARD_MOUNT_POINT "/sdcard"
 
 static const char *TAG = "main";
 
@@ -35,14 +38,17 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // WiFi initialization
-    if(wifi_init_sta() == ESP_FAIL){
-        ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
-        vTaskDelay(pdMS_TO_TICKS(10000));
-        esp_restart();
-    }
+    // if(wifi_init_sta() == ESP_FAIL){
+    //     ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
+    //     vTaskDelay(pdMS_TO_TICKS(10000));
+    //     esp_restart();
+    // }
 
     // MQTT initialization
     // esp_mqtt_client_handle_t mqtt_client = mqtt_app_start();
+
+    // SD card initialization
+    ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));
 
     /* ***** SETUP COMPLETED ***** */
 
