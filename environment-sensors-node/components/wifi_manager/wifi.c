@@ -6,6 +6,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "sdkconfig.h"
 
 #include "lwip/err.h"
@@ -24,6 +25,14 @@ static EventGroupHandle_t s_wifi_event_group;
 static const char *TAG = "wifi station";
 
 static int s_retry_num = 0;
+static bool s_has_connected = false;
+static esp_timer_handle_t s_reconnect_timer;
+
+static void reconnect_timer_cb(void* arg)
+{
+    (void)arg;
+    esp_wifi_connect();
+}
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -37,6 +46,21 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
         /* This event can be raised by esp_wifi_connect() if it was not possible to connect to the AP */
         if(event_id == WIFI_EVENT_STA_DISCONNECTED){
+            if (s_has_connected) {
+                uint32_t delay_ms = 1000U << (s_retry_num < 6 ? s_retry_num : 6);
+                if (delay_ms > 60000U) {
+                    delay_ms = 60000U;
+                }
+
+                s_retry_num++;
+                if (s_reconnect_timer) {
+                    esp_timer_stop(s_reconnect_timer);
+                }
+                esp_timer_start_once(s_reconnect_timer, (uint64_t)delay_ms * 1000U);
+                ESP_LOGW(TAG, "disconnected, reconnecting in %u ms", delay_ms);
+                return;
+            }
+
             if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY){
                 esp_wifi_connect();
                 s_retry_num++;
@@ -55,6 +79,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
+        s_has_connected = true;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
@@ -84,6 +109,12 @@ esp_err_t wifi_init_sta(void)
                                                         &event_handler,
                                                         NULL,
                                                         NULL));
+
+    const esp_timer_create_args_t timer_args = {
+        .callback = &reconnect_timer_cb,
+        .name = "wifi_reconnect"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&timer_args, &s_reconnect_timer));
 
     // WiFi configuration, based on menuconfig
     wifi_config_t wifi_config = {
