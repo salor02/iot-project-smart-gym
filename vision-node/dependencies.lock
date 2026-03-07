@@ -41,6 +41,6 @@ direct_dependencies:
 - espressif/esp32-camera
 - espressif/mqtt
 - idf
-manifest_hash: ea5d62424c1da1445d3aa44be25b6199fd60974b39ef19527a0ac44cd95eb3df
+manifest_hash: dc4cc48a1902dcf7181f5ec3c5b893e65c2cb2d8db66cd8a90072a51f39ccd2c
 target: esp32
 version: 2.0.0

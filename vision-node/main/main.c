@@ -17,6 +17,7 @@
 #include "sdcard.h"
 #include "ota_update.h"
 #include "camera_manager.h"
+#include "streaming_server.h"
 
 #define SDCARD_MOUNT_POINT "/sdcard"
 
@@ -63,12 +64,12 @@ void app_main(void){
     // Event loop creation
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // // WiFi initialization
-    // if(wifi_init_sta() == ESP_FAIL){
-    //     ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
-    //     vTaskDelay(pdMS_TO_TICKS(10000));
-    //     esp_restart();
-    // }
+    // WiFi initialization
+    if(wifi_init_sta() == ESP_FAIL){
+        ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
+        vTaskDelay(pdMS_TO_TICKS(10000));
+        esp_restart();
+    }
 
     // // MQTT initialization
     // mqtt_manager_config_t mqtt_config = {
@@ -91,9 +92,12 @@ void app_main(void){
         return;
     }
     ESP_LOGI("MAIN", "PSRAM disponibile: %d bytes", esp_psram_get_size());
-      
+
     // Camera initialization
     ESP_ERROR_CHECK(camera_init());
+
+    // Streaming server initialization
+    ESP_ERROR_CHECK(stream_server_init());
 
     // Events binding
     // esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_handler, NULL);

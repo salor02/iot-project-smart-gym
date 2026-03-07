@@ -1,7 +1,7 @@
 #pragma once
 #include "esp_camera.h"
 
-//WROVER-KIT PIN Map
+//ESP32 CAM AI-Thinker PIN MAP
 #define CAM_PIN_PWDN 32
 #define CAM_PIN_RESET -1 //software reset will be performed
 #define CAM_PIN_XCLK 0
@@ -21,4 +21,3 @@
 #define CAM_PIN_PCLK 22
 
 esp_err_t camera_init();
-esp_err_t camera_capture();
