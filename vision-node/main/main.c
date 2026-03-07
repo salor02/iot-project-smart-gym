@@ -26,9 +26,20 @@ static void mqtt_handler(void* handler_args, esp_event_base_t base, int32_t id, 
     
     if (strcmp(msg->topic, "vision/ota") == 0) {
         if (strcmp(msg->payload, "start") == 0) {
-            ESP_LOGI(TAG, "Received MQTT OTA command (%s)", msg->payload);
+            ESP_LOGI(TAG, "Received OTA command (%s)", msg->payload);
             xTaskCreate(&ota_request_update, "ota_update", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
             mqtt_manager_publish("vision/ota", "update_started");
+        }
+    }
+
+    if (strcmp(msg->topic, "vision/cmd") == 0) {
+        if (strcmp(msg->payload, "start_rec") == 0) {
+            ESP_LOGI(TAG, "Received command (%s)", msg->payload);
+            mqtt_manager_publish("vision/status", "recording_started");
+        }
+        if (strcmp(msg->payload, "stop_rec") == 0) {
+            ESP_LOGI(TAG, "Received command (%s)", msg->payload);
+            mqtt_manager_publish("vision/status", "recording_stopped");
         }
     }
 }
@@ -61,12 +72,13 @@ void app_main(void){
     mqtt_manager_config_t mqtt_config = {
         .broker_uri = CONFIG_MQTT_BROKER_URI,
         .subscribe_topics = {
-            "vision/record",
+            "vision/cmd",
             "vision/ota"
         },
         .num_topics = 2
     };
     mqtt_manager_init(&mqtt_config);
+    mqtt_manager_publish("vision/status", "started");
 
     // SD card initialization
     ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));

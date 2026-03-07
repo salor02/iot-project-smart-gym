@@ -1,4 +1,28 @@
 dependencies:
+  espressif/esp32-camera:
+    component_hash: ac4228c825b891378bc0806869170d4ebc5d45ba8ebc519b4f8886a56ad2d123
+    dependencies:
+    - name: espressif/esp_jpeg
+      registry_url: https://components.espressif.com
+      require: public
+      version: ^1.3.1
+    - name: idf
+      require: private
+      version: '>=5.1'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.1.5
+  espressif/esp_jpeg:
+    component_hash: defb83669293cbf86d0fa86b475ba5517aceed04ed70db435388c151ab37b5d7
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.3.1
   espressif/mqtt:
     component_hash: ffdad5659706b4dc14bc63f8eb73ef765efa015bf7e9adf71c813d52a2dc9342
     dependencies:
@@ -14,7 +38,9 @@ dependencies:
       type: idf
     version: 5.5.1
 direct_dependencies:
+- espressif/esp32-camera
 - espressif/mqtt
-manifest_hash: 2e90d000c0b1a0f4e98ca5ca5b4792a25d6257d85fdc0db53e85edc0af4309ca
+- idf
+manifest_hash: 713e1b0a5a1330b3af33c729bdb165533ddb362063058bcb1e3f5dfd8caff07b
 target: esp32
 version: 2.0.0
