@@ -10,11 +10,13 @@
 #include "nvs_flash.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
+#include "esp_psram.h"
 
 #include "wifi.h"
 #include "mqtt.h"
 #include "sdcard.h"
 #include "ota_update.h"
+#include "camera_manager.h"
 
 #define SDCARD_MOUNT_POINT "/sdcard"
 
@@ -61,30 +63,40 @@ void app_main(void){
     // Event loop creation
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // WiFi initialization
-    if(wifi_init_sta() == ESP_FAIL){
-        ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
-        vTaskDelay(pdMS_TO_TICKS(10000));
-        esp_restart();
-    }
+    // // WiFi initialization
+    // if(wifi_init_sta() == ESP_FAIL){
+    //     ESP_LOGE(TAG, "Connection failed, reboot in 10 seconds");
+    //     vTaskDelay(pdMS_TO_TICKS(10000));
+    //     esp_restart();
+    // }
 
-    // MQTT initialization
-    mqtt_manager_config_t mqtt_config = {
-        .broker_uri = CONFIG_MQTT_BROKER_URI,
-        .subscribe_topics = {
-            "vision/cmd",
-            "vision/ota"
-        },
-        .num_topics = 2
-    };
-    mqtt_manager_init(&mqtt_config);
-    mqtt_manager_publish("vision/status", "started");
+    // // MQTT initialization
+    // mqtt_manager_config_t mqtt_config = {
+    //     .broker_uri = CONFIG_MQTT_BROKER_URI,
+    //     .subscribe_topics = {
+    //         "vision/cmd",
+    //         "vision/ota"
+    //     },
+    //     .num_topics = 2
+    // };
+    // mqtt_manager_init(&mqtt_config);
+    // mqtt_manager_publish("vision/status", "started");
 
     // SD card initialization
-    ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));
+    // ESP_ERROR_CHECK(sdcard_init(SDCARD_MOUNT_POINT));
+
+    // Check on the psram initialization
+    if (!esp_psram_is_initialized()) {
+        ESP_LOGE("MAIN", "PSRAM non trovata! Controlla la configurazione.");
+        return;
+    }
+    ESP_LOGI("MAIN", "PSRAM disponibile: %d bytes", esp_psram_get_size());
+      
+    // Camera initialization
+    ESP_ERROR_CHECK(camera_init());
 
     // Events binding
-    esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_handler, NULL);
+    // esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_handler, NULL);
 
 
     /* ***** SETUP COMPLETED ***** */
