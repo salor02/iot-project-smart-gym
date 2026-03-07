@@ -7,6 +7,8 @@
 
 #define PART_BOUNDARY "123456789000000000000987654321"
 
+ESP_EVENT_DEFINE_BASE(STREAMING_SERVER_EVENTS);
+
 static const char *TAG = "streaming";
 
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
@@ -29,6 +31,8 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
     if(res != ESP_OK){
         return res;
     }
+
+    esp_event_post(STREAMING_SERVER_EVENTS, STREAMING_SERVER_RECORDING_START, NULL, 0, portMAX_DELAY);
 
     while(true){
         fb = esp_camera_fb_get();
@@ -70,9 +74,13 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
             free(jpg_buf);
         }
         esp_camera_fb_return(fb);
-        if(res != ESP_OK){
+
+        if (res != ESP_OK) {
+            ESP_LOGI(TAG, "Client disconnected, closing stream");
+            esp_event_post(STREAMING_SERVER_EVENTS, STREAMING_SERVER_RECORDING_STOP, NULL, 0, portMAX_DELAY);
             break;
         }
+        
         int64_t fr_end = esp_timer_get_time();
         int64_t frame_time = fr_end - last_frame;
         last_frame = fr_end;
@@ -81,6 +89,8 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
         ESP_LOGI(TAG, "MJPG: %uKB %ums (%.1ffps)",
             (uint32_t)(jpg_buf_len/1024),
             (uint32_t)frame_time, fps);
+
+
     }
 
     last_frame = 0;
