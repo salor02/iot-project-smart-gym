@@ -137,6 +137,9 @@ def frame_consumer():
     )
 
     exercise = ExerciseTracker()
+    prev_reps = 0
+    prev_state = "idle"
+    mqtt_client.publish("vision/tracker_state", exercise.state)
 
     with PoseLandmarker.create_from_options(options) as landmarker:
         global video_writer
@@ -163,6 +166,18 @@ def frame_consumer():
             joints = extract_joints(landmarker, frame)
             if joints is not None:
                 exercise.detect(joints)
+                if exercise.reps > prev_reps:
+                    prev_reps = exercise.reps
+                    # Publish session current reps via MQTT
+                    payload = json.dumps({"exercise": exercise.exercise.name, "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+                    mqtt_client.publish("vision/sessions", payload)
+                    print(f"[Consumer] Published session current stats: {payload}")
+                
+                if exercise.state != prev_state:
+                    payload = exercise.state
+                    mqtt_client.publish("vision/tracker_state", payload)
+                    print(f"[Consumer] Published tracker current state: {payload}")
+
                 # Draw joints on frame for debug
                 h, w, _ = frame.shape
                 for name, j in joints.items():
@@ -198,13 +213,14 @@ def frame_consumer():
         video_writer = None
         print(f"[Consumer] Video saved to {video_path}")
 
-    # Publish session summary via MQTT
-    if mqtt_client is not None:
-        ex_name = exercise.exercise.name if exercise.exercise else "None"
-        payload = json.dumps({"exercise": ex_name, "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+    # Publish session summary via MQTT if the exercise is None (useful for debug purpose)
+    if exercise.exercise is None:
+        payload = json.dumps({"exercise": "None", "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
         mqtt_client.publish("vision/sessions", payload)
-        print(f"[Consumer] Published session result: {payload}")
+        print(f"[Consumer] Published session result for an invalid session: {payload}")
 
+    # Signal that tracker has been stopped too
+    mqtt_client.publish("vision/tracker_state", "stopped")
     print("[Consumer] Stopped")
 
 
@@ -306,7 +322,7 @@ def main():
         client.loop_stop()
         client.disconnect()
 
-# main thread -> MQTT loop_forever(): handles MQTT messages and manage sessions, each session consists of two threads
+# main thread -> MQTT loop_start(): handles MQTT messages and manage sessions, each session consists of two threads
 # producer thread -> reads data from the HTTP stream and send the produced frame in a queue
 # consumer thread -> reads frame from the queue and apply the MediaPipe pose landmarks extracion
 if __name__ == "__main__":
