@@ -1,12 +1,14 @@
 import threading
 import queue
 import os
+import json
 from datetime import datetime
 import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
 import mediapipe as mp
 from urllib.request import urlopen
+from exerciseTracker import ExerciseTracker
 
 BaseOptions = mp.tasks.BaseOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
@@ -42,11 +44,11 @@ JOINT_INDICES = {
 stop_event = threading.Event()
 is_running = False
 frame_queue = queue.Queue()
-display_queue = queue.Queue(maxsize=2)  # consumer -> main thread for cv2.imshow
-video_writer = None
+display_queue = queue.Queue(maxsize=2)
+mqtt_client = None
 
 # Run pose detection on a BGR frame and return the 13-joint dict or None
-def extract_joints(landmarker: PoseLandmarker, frame: np.ndarray):
+def extract_joints(landmarker, frame):
     # Color conversion BGR to RGB, openCV works with BGR and mediapipe with RGB
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
@@ -134,6 +136,8 @@ def frame_consumer():
         running_mode=VisionRunningMode.IMAGE,
     )
 
+    exercise = ExerciseTracker()
+
     with PoseLandmarker.create_from_options(options) as landmarker:
         global video_writer
         frame_index = 0
@@ -158,7 +162,7 @@ def frame_consumer():
 
             joints = extract_joints(landmarker, frame)
             if joints is not None:
-                # exercise.detect(joints, frame_index)
+                exercise.detect(joints)
                 # Draw joints on frame for debug
                 h, w, _ = frame.shape
                 for name, j in joints.items():
@@ -167,15 +171,20 @@ def frame_consumer():
                     cv2.putText(frame, name, (cx + 8, cy - 8),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
 
-            # Initialize video writer on first frame in order to know the resolution
-            if video_writer is None:
-                h, w = frame.shape[:2]
-                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-                video_writer = cv2.VideoWriter(video_path, fourcc, OUTPUT_FPS, (w, h))
-                print(f"[Consumer] Recording to {video_path}")
+            # Draw exercise info on the top-left corner
+            ex_name = exercise.exercise.name if exercise.exercise else "Unrecognized"
+            info_text = f"State: {exercise.state} | Reps: {exercise.reps} | Ex: {ex_name}"
+            cv2.putText(frame, info_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-            # Write annotated frame to video file
-            video_writer.write(frame)
+            # # Initialize video writer on first frame in order to know the resolution
+            # if video_writer is None:
+            #     h, w = frame.shape[:2]
+            #     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            #     video_writer = cv2.VideoWriter(video_path, fourcc, OUTPUT_FPS, (w, h))
+            #     print(f"[Consumer] Recording to {video_path}")
+
+            # # Write annotated frame to video file
+            # video_writer.write(frame)
 
             # Send annotated frame to main thread for display
             if not display_queue.full():
@@ -188,6 +197,13 @@ def frame_consumer():
         video_writer.release()
         video_writer = None
         print(f"[Consumer] Video saved to {video_path}")
+
+    # Publish session summary via MQTT
+    if mqtt_client is not None:
+        ex_name = exercise.exercise.name if exercise.exercise else "None"
+        payload = json.dumps({"exercise": ex_name, "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+        mqtt_client.publish("vision/sessions", payload)
+        print(f"[Consumer] Published session result: {payload}")
 
     print("[Consumer] Stopped")
 
@@ -252,10 +268,13 @@ def on_message(client, userdata, msg, properties=None):
 
 # ----- MAIN -----
 def main():
+    global mqtt_client
     # mqtt setup
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
+    
+    mqtt_client = client
 
     # Create output directory for recordings
     os.makedirs(OUTPUT_DIR, exist_ok=True)
