@@ -1,0 +1,5 @@
+menu "Deep Sleep Configuration"
+    config WAKEUP_PIN
+        int "Wakeup GPIO"
+        default 13
+endmenu

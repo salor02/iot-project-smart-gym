@@ -11,6 +11,7 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 #include "esp_psram.h"
+#include "esp_sleep.h"
 
 #include "wifi.h"
 #include "mqtt.h"
@@ -18,6 +19,7 @@
 #include "ota_update.h"
 #include "camera_manager.h"
 #include "streaming_server.h"
+#include "sleep_manager.h"
 
 #define SDCARD_MOUNT_POINT "/sdcard"
 
@@ -56,6 +58,12 @@ static void mqtt_sender(void* handler_args, esp_event_base_t base, int32_t id, v
 
 void app_main(void){
     /* ***** INITIAL SETUP ***** */
+
+    if(esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_EXT0){
+        ESP_LOGI(TAG, "Standard wakeup, going to deep sleep, waiting for an EXT0 wakeup");
+        deep_sleep_register_ext0_wakeup();
+        esp_deep_sleep_start();
+    }
 
     // NVS Initialization
     esp_err_t ret = nvs_flash_init();
@@ -110,7 +118,12 @@ void app_main(void){
     esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_recipient, NULL);
     esp_event_handler_register(STREAMING_SERVER_EVENTS, ESP_EVENT_ANY_ID, mqtt_sender, NULL);
 
+    // Deep sleep handler initialization
+    ESP_ERROR_CHECK(deep_sleep_init());
+
     /* ***** SETUP COMPLETED ***** */
 
     /* ***** TASKS DECLARATION ***** */
+
+    xTaskCreate(deep_sleep_manager_task, "deep_sleep_manager_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
 }

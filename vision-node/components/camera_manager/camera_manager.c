@@ -33,7 +33,7 @@ static camera_config_t camera_config = {
 
     .jpeg_quality = 15, //0-63, for OV series camera sensors, lower number means higher quality
     .fb_count = 3, //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
-    .grab_mode = CAMERA_GRAB_WHEN_EMPTY//CAMERA_GRAB_LATEST. Sets when buffers should be filled
+    .grab_mode = CAMERA_GRAB_LATEST//CAMERA_GRAB_LATEST. Sets when buffers should be filled
 };
 
 esp_err_t camera_init(){
