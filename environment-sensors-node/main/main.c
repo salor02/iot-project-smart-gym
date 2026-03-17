@@ -98,17 +98,16 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
     char json_buffer[128];
         
     // format the MQTT message based on the received message's type and then publish it
+    // Please note: this handler is used just for debug purpose
     if(base == PIR_EVENT){
         switch(id){
             case EVENT_MOTION_CONFIRMED: {
-                snprintf(json_buffer, sizeof(json_buffer), "{\"motion\": true}");
-                esp_mqtt_client_publish(mqtt_client, "sensors/pir", json_buffer, 0, 1, 0);
+                esp_mqtt_client_publish(mqtt_client, "sensors/pir", "motion_confirmed", 0, 1, 0);
                 break;
             }
 
             case EVENT_MOTION_TIMEOUT: {
-                snprintf(json_buffer, sizeof(json_buffer), "{\"motion\": false}");
-                esp_mqtt_client_publish(mqtt_client, "sensors/pir", json_buffer, 0, 1, 0);
+                esp_mqtt_client_publish(mqtt_client, "sensors/pir", "motion_timeout", 0, 1, 0);
                 break;
             }
         }
@@ -149,12 +148,31 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
     }
 }
 
+void deep_sleep_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
+    if(base == PIR_EVENT){
+        switch(id){
+            case EVENT_MOTION_CONFIRMED: {
+                gpio_set_level(CONFIG_DEEP_SLEEP_GPIO, 1);
+                break;
+            }
+
+            case EVENT_MOTION_TIMEOUT: {
+                gpio_set_level(CONFIG_DEEP_SLEEP_GPIO, 0);
+                break;
+            }
+        }
+        return;
+    }
+}
+
 // this task is called by another task and produces a sound from the buzzer. It deletes itself upon termination
 void sound_task(void *pvParameters){
+    int cycles = *(int*) pvParameters;
+
     gpio_reset_pin(CONFIG_BUZZER_GPIO);
     gpio_set_direction(CONFIG_BUZZER_GPIO, GPIO_MODE_OUTPUT);
 
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < cycles; i++){
         gpio_set_level(CONFIG_BUZZER_GPIO, 1);
         vTaskDelay(pdMS_TO_TICKS(200));
         gpio_set_level(CONFIG_BUZZER_GPIO, 0);
@@ -176,13 +194,15 @@ void sound_led_handler(void* handler_args, esp_event_base_t base, int32_t id, vo
             break;
         }
 
-        case EVENT_MOTION_CONFIRMED: { 
-            // xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+        case EVENT_MOTION_CONFIRMED: {
+            int cycles = 3; 
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, &cycles, 5, NULL);
             break;
         }
 
         case EVENT_MOTION_TIMEOUT: {
-            // xTaskCreate(start_sound, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+            int cycles = 1;
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, &cycles, 5, NULL);
             break;
         }
     }
@@ -221,11 +241,17 @@ void app_main()
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
     ESP_ERROR_CHECK(esp_event_handler_register(PIR_EVENT, ESP_EVENT_ANY_ID, sound_led_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(PIR_EVENT, ESP_EVENT_ANY_ID, deep_sleep_handler, NULL));
 
     // LED initialization
     ESP_ERROR_CHECK(gpio_reset_pin(CONFIG_LED_GPIO));
     ESP_ERROR_CHECK(gpio_set_direction(CONFIG_LED_GPIO, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_level(CONFIG_LED_GPIO, 0));
+
+    // Deep sleep PIN initialization
+    ESP_ERROR_CHECK(gpio_reset_pin(CONFIG_DEEP_SLEEP_GPIO));
+    ESP_ERROR_CHECK(gpio_set_direction(CONFIG_DEEP_SLEEP_GPIO, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_level(CONFIG_DEEP_SLEEP_GPIO, 0));
 
     // PIR sensor initialization
     ESP_ERROR_CHECK(pir_init(CONFIG_PIR_GPIO));

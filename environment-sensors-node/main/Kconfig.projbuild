@@ -64,6 +64,11 @@ menu "GPIO Mapping"
         default 13
         help
             Connect SET pin of PMS sensor to this GPIO
+
+    config DEEP_SLEEP_GPIO
+        int "Deep sleep GPIO to wake up vision node"
+        default 15
+        
 endmenu
 
 menu "SHT3X configuration"
