@@ -1,0 +1,15 @@
+services:
+  pose-extractor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pose-extractor
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DISPLAY: ${DISPLAY}
+      QT_X11_NO_MITSHM: "1"
+    volumes:
+      - ./recordings:/app/recordings
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw

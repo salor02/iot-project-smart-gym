@@ -1,3 +1,4 @@
 recordings
 *.task
 .vscode
+.env

@@ -2,6 +2,7 @@ import threading
 import queue
 import os
 import json
+import time
 from datetime import datetime
 import cv2
 import numpy as np
@@ -16,13 +17,14 @@ PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 # Configuration
-STREAM_URL = "http://192.168.1.52/stream"
-MQTT_BROKER = "192.168.1.253"
-MQTT_PORT = 1883
-MQTT_TOPIC = "vision/cmd"
-MODEL_PATH = "pose_landmarker_full.task"
-OUTPUT_DIR = "recordings"
-OUTPUT_FPS = 15
+STREAM_URL = os.environ["STREAM_URL"]
+MQTT_BROKER = os.environ["MQTT_BROKER"]
+MQTT_PORT = int(os.environ["MQTT_PORT"])
+MQTT_TOPIC = os.environ["MQTT_TOPIC"]
+MODEL_PATH = os.environ["MODEL_PATH"]
+OUTPUT_DIR = os.environ["OUTPUT_DIR"]
+OUTPUT_FPS = int(os.environ["OUTPUT_FPS"])
+ENABLE_PREVIEW = os.environ["ENABLE_PREVIEW"].strip().lower() in {"1", "true", "yes", "on"}
 
 # Indices of the 13 joints we care about
 JOINT_INDICES = {
@@ -174,6 +176,7 @@ def frame_consumer():
                     print(f"[Consumer] Published session current stats: {payload}")
                 
                 if exercise.state != prev_state:
+                    prev_state = exercise.state
                     payload = exercise.state
                     mqtt_client.publish("vision/tracker_state", payload)
                     print(f"[Consumer] Published tracker current state: {payload}")
@@ -191,15 +194,15 @@ def frame_consumer():
             info_text = f"State: {exercise.state} | Reps: {exercise.reps} | Ex: {ex_name}"
             cv2.putText(frame, info_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-            # # Initialize video writer on first frame in order to know the resolution
-            # if video_writer is None:
-            #     h, w = frame.shape[:2]
-            #     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            #     video_writer = cv2.VideoWriter(video_path, fourcc, OUTPUT_FPS, (w, h))
-            #     print(f"[Consumer] Recording to {video_path}")
+            # Initialize video writer on first frame in order to know the resolution
+            if video_writer is None:
+                h, w = frame.shape[:2]
+                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                video_writer = cv2.VideoWriter(video_path, fourcc, OUTPUT_FPS, (w, h))
+                print(f"[Consumer] Recording to {video_path}")
 
-            # # Write annotated frame to video file
-            # video_writer.write(frame)
+            # Write annotated frame to video file
+            video_writer.write(frame)
 
             # Send annotated frame to main thread for display
             if not display_queue.full():
@@ -301,24 +304,28 @@ def main():
     # Start MQTT background thread
     client.loop_start()
 
-    # Display GUI for debug
+    # Display GUI for debug (optional)
     try:
         while True:
             try:
                 frame = display_queue.get(timeout=0.05)
-                cv2.imshow("ESP32-CAM", frame)
+                if ENABLE_PREVIEW:
+                    cv2.imshow("ESP32-CAM", frame)
             except queue.Empty:
-                pass
+                if not ENABLE_PREVIEW:
+                    time.sleep(0.05)
 
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                print("[Main] 'q' pressed, stopping session")
-                stop_session()
+            if ENABLE_PREVIEW:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
+                    print("[Main] 'q' pressed, stopping session")
+                    stop_session()
     except KeyboardInterrupt:
         print("[Main] Interrupted")
         stop_session()
     finally:
-        cv2.destroyAllWindows()
+        if ENABLE_PREVIEW:
+            cv2.destroyAllWindows()
         client.loop_stop()
         client.disconnect()
 
