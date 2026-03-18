@@ -10,6 +10,7 @@ import paho.mqtt.client as mqtt
 import mediapipe as mp
 from urllib.request import urlopen
 from exerciseTracker import ExerciseTracker
+import subprocess
 
 BaseOptions = mp.tasks.BaseOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
@@ -48,6 +49,21 @@ is_running = False
 frame_queue = queue.Queue()
 display_queue = queue.Queue(maxsize=2)
 mqtt_client = None
+
+# Recordings codec conversion in order to serve them through HTTP via NodeRed
+def convert_to_h264(input_path):
+    temp_path = input_path.replace(".mp4", "_temp.mp4")
+    subprocess.run([
+        "ffmpeg", "-y",
+        "-i", input_path,
+        "-vcodec", "libx264",
+        "-preset", "fast",
+        "-crf", "23",             # quality (18=high, 28=low)
+        temp_path
+    ], check=True)
+    os.remove(input_path)
+    os.rename(temp_path, input_path)
+    return input_path
 
 # Run pose detection on a BGR frame and return the 13-joint dict or None
 def extract_joints(landmarker, frame):
@@ -171,7 +187,7 @@ def frame_consumer():
                 if exercise.reps > prev_reps:
                     prev_reps = exercise.reps
                     # Publish session current reps via MQTT
-                    payload = json.dumps({"exercise": exercise.exercise.name, "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+                    payload = json.dumps({"exercise": exercise.exercise.name, "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
                     mqtt_client.publish("vision/sessions", payload)
                     print(f"[Consumer] Published session current stats: {payload}")
                 
@@ -214,11 +230,12 @@ def frame_consumer():
     if video_writer is not None:
         video_writer.release()
         video_writer = None
+        convert_to_h264(video_path)
         print(f"[Consumer] Video saved to {video_path}")
 
     # Publish session summary via MQTT if the exercise is None (useful for debug purpose)
     if exercise.exercise is None:
-        payload = json.dumps({"exercise": "None", "reps": exercise.reps, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+        payload = json.dumps({"exercise": "None", "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
         mqtt_client.publish("vision/sessions", payload)
         print(f"[Consumer] Published session result for an invalid session: {payload}")
 
