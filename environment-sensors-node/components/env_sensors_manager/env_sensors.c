@@ -7,6 +7,8 @@
 #include "esp_log.h"
 #include "sht3x.h"
 
+#include <math.h>
+
 #include "env_sensors.h"
 #include "moving_avarage.h"
 #include "sdkconfig.h"
@@ -19,6 +21,41 @@ static sht3x_t dev;
 static adc_oneshot_unit_handle_t adc_handle;
 static uint8_t MQ7_ADC_CHANNEL;
 static uint8_t MQ135_ADC_CHANNEL;
+
+// calibrated constants
+#define MQ7_R0      0.87f   // Rs (24.00) / 27.5
+#define MQ135_R0    11.11f  // Rs (40.00) / 3.6
+
+// convert raw adc value to a ppm value
+static int calculate_ppm(int raw_adc, float r0, float a, float b) {
+    if (raw_adc == 0 || raw_adc >= 4095) return 0;
+
+    // esp32 pin voltage
+    float v_adc = ((float)raw_adc / 4095.0f) * 3.3f;
+    
+    // original vout tension from sensor
+    float v_out = v_adc * 1.5f;
+    if (v_out <= 0.01f || v_out >= 5.0f) return 0;
+    
+    // the used sensors have an intern resistance of 1k
+    float rs = 1.0f * (5.0f - v_out) / v_out;
+    
+    // calibration logs
+    // float r0_mq7_cal = rs / 27.5f;
+    // float r0_mq135_cal = rs / 3.6f;
+    // ESP_LOGI(TAG, "[calibration] - Vout: %.2fV | Rs: %.2f kOhm | R0_Mq7: %.2f | R0_Mq135: %.2f", v_out, rs, r0_mq7_cal, r0_mq135_cal);
+    
+    float ratio = rs / r0;
+    
+    /*
+        get ppm throught regression formula
+        mq7 (CO): a = 99.04, b = -1.518
+        mq135 (Air): a = 110.47, b = -2.86
+    */
+    float ppm = a * pow(ratio, b);
+    
+    return (int)ppm;
+}
 
 esp_err_t temp_sensor_init(uint8_t addr, gpio_num_t sda_gpio, gpio_num_t scl_gpio){    
     // I2C dev initialization
@@ -89,17 +126,23 @@ void env_sensors_task(void *pvParameters){
         // SHT31 reading
         sht3x_measure(&dev, &env_data_raw.temp, &env_data_raw.humidity);
 
+        int mq7_raw, mq135_raw;
+
         // gas sensors reading (ADC)
-        err = adc_oneshot_read(adc_handle, MQ7_ADC_CHANNEL, &env_data_raw.mq7_val);
+        err = adc_oneshot_read(adc_handle, MQ7_ADC_CHANNEL, &mq7_raw);
         if(err != ESP_OK){
             ESP_LOGW(TAG, "adc mq7 read failed: %s", esp_err_to_name(err));
             continue;
         }
-        err = adc_oneshot_read(adc_handle, MQ135_ADC_CHANNEL, &env_data_raw.mq135_val);
+        err = adc_oneshot_read(adc_handle, MQ135_ADC_CHANNEL, &mq135_raw);
         if(err != ESP_OK){
             ESP_LOGW(TAG, "adc mq135 read failed: %s", esp_err_to_name(err));
             continue;
         }
+
+        // get PPM (MQ7: a=99.04, b=-1.518 | MQ135: a=110.47, b=-2.86)
+        env_data_raw.mq7_val = calculate_ppm(mq7_raw, MQ7_R0, 99.04f, -1.518f);
+        env_data_raw.mq135_val = calculate_ppm(mq135_raw, MQ135_R0, 110.47f, -2.86f);
 
         // the raw data read by the sensors are now filtered by the moving avarage update step
         env_data_filtered.temp = ma_update(&temp_filter, env_data_raw.temp);
