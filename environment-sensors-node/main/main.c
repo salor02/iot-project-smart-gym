@@ -19,6 +19,23 @@
 
 static const char *TAG = "main";
 
+// this task is called by another task and produces a sound from the buzzer. It deletes itself upon termination
+void sound_task(void *pvParameters){
+    int cycles = (int) pvParameters;
+
+    gpio_reset_pin(CONFIG_BUZZER_GPIO);
+    gpio_set_direction(CONFIG_BUZZER_GPIO, GPIO_MODE_OUTPUT);
+
+    for(int i = 0; i < cycles; i++){
+        gpio_set_level(CONFIG_BUZZER_GPIO, 1);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        gpio_set_level(CONFIG_BUZZER_GPIO, 0);
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+
+    vTaskDelete(NULL);
+}
+
 // this function waits for a data ready event to be raised and then it display the message through the serial monitor
 void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     if(base == PIR_EVENT){
@@ -91,23 +108,17 @@ void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id
 }
 
 // this function waits for a data ready event to be raised and then it sends the message through MQTT, in a topic based on the event type itself.
-void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
-
-    esp_mqtt_client_handle_t mqtt_client = (esp_mqtt_client_handle_t) handler_args;
-    
-    char json_buffer[128];
-        
+void mqtt_sender(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     // format the MQTT message based on the received message's type and then publish it
-    // Please note: this handler is used just for debug purpose
     if(base == PIR_EVENT){
         switch(id){
             case EVENT_MOTION_CONFIRMED: {
-                esp_mqtt_client_publish(mqtt_client, "sensors/pir", "motion_confirmed", 0, 1, 0);
+                mqtt_manager_publish("sensors/pir", "motion_confirmed");
                 break;
             }
 
             case EVENT_MOTION_TIMEOUT: {
-                esp_mqtt_client_publish(mqtt_client, "sensors/pir", "motion_timeout", 0, 1, 0);
+                mqtt_manager_publish("sensors/pir", "motion_timeout");
                 break;
             }
         }
@@ -118,12 +129,13 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
         switch(id){
             case EVENT_PMS_DATA_READY: {
                 pms_data_t *pms_data = (pms_data_t*) event_data;
-
+                char json_buffer[128];
+        
                 snprintf(json_buffer, sizeof(json_buffer), 
                     "{\"pm1_0\": %d, \"pm2_5\": %d, \"pm10\": %d}", 
                     pms_data->pm1_0, pms_data->pm2_5, pms_data->pm10);
                 
-                esp_mqtt_client_publish(mqtt_client, "sensors/air_quality", json_buffer, 0, 1, 0);
+                mqtt_manager_publish("sensors/air_quality", json_buffer);
                 break;
             }
         }
@@ -134,17 +146,40 @@ void mqtt_publish_handler(void* handler_args, esp_event_base_t base, int32_t id,
         switch (id) {
             case EVENT_ENV_DATA_READY: {
                 env_data_t *env_data = (env_data_t*) event_data;
+                char json_buffer[128];
 
                 snprintf(json_buffer, sizeof(json_buffer), 
                     "{\"temp\": %.2f, \"humidity\": %.2f, \"co\": %d, \"air\": %d}", 
                     env_data->temp, env_data->humidity, 
                     env_data->mq7_val, env_data->mq135_val);
                 
-                esp_mqtt_client_publish(mqtt_client, "sensors/environment", json_buffer, 0, 1, 0);
+                mqtt_manager_publish("sensors/environment", json_buffer);
                 break;
             }
         }
         return;
+    }
+}
+
+// this function handles the events raised by the MQTT manager on a received message
+static void mqtt_recipient(void* handler_args, esp_event_base_t base, int32_t id, void* event_data) {
+    mqtt_msg_t *msg = (mqtt_msg_t *)event_data;
+    
+    if (strcmp(msg->topic, "vision/status") == 0) {
+        if (strcmp(msg->payload, "recording_started") == 0) {
+            ESP_LOGI(TAG, "Recording started on vision node");
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, (void *) 2, 5, NULL);
+        }
+
+        if (strcmp(msg->payload, "recording_stopped") == 0){
+            ESP_LOGI(TAG, "Recording stopped on vision node");
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, (void *) 2, 5, NULL);
+        }
+
+        if (strcmp(msg->payload, "started") == 0){
+            ESP_LOGI(TAG, "Vision node started");
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, (void *) 5, 5, NULL);
+        }
     }
 }
 
@@ -165,23 +200,6 @@ void deep_sleep_handler(void* handler_args, esp_event_base_t base, int32_t id, v
     }
 }
 
-// this task is called by another task and produces a sound from the buzzer. It deletes itself upon termination
-void sound_task(void *pvParameters){
-    int cycles = *(int*) pvParameters;
-
-    gpio_reset_pin(CONFIG_BUZZER_GPIO);
-    gpio_set_direction(CONFIG_BUZZER_GPIO, GPIO_MODE_OUTPUT);
-
-    for(int i = 0; i < cycles; i++){
-        gpio_set_level(CONFIG_BUZZER_GPIO, 1);
-        vTaskDelay(pdMS_TO_TICKS(200));
-        gpio_set_level(CONFIG_BUZZER_GPIO, 0);
-        vTaskDelay(pdMS_TO_TICKS(200));
-    }
-
-    vTaskDelete(NULL);
-}
-
 void sound_led_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     switch(id){
         case EVENT_MOTION_DETECTED: { 
@@ -194,15 +212,12 @@ void sound_led_handler(void* handler_args, esp_event_base_t base, int32_t id, vo
             break;
         }
 
-        case EVENT_MOTION_CONFIRMED: {
-            int cycles = 3; 
-            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, &cycles, 5, NULL);
-            break;
-        }
+        // case EVENT_MOTION_CONFIRMED: {
+        //     break;
+        // }
 
         case EVENT_MOTION_TIMEOUT: {
-            int cycles = 1;
-            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, &cycles, 5, NULL);
+            xTaskCreate(sound_task, "buzzer_start_sound", configMINIMAL_STACK_SIZE * 3, (void *) 1, 5, NULL);
             break;
         }
     }
@@ -235,11 +250,19 @@ void app_main()
     }
 
     // MQTT initialization
-    esp_mqtt_client_handle_t mqtt_client = mqtt_app_start();
+    mqtt_manager_config_t mqtt_config = {
+        .broker_uri = CONFIG_MQTT_BROKER_URI,
+        .subscribe_topics = {
+            "vision/status"
+        },
+        .num_topics = 1
+    };
+    mqtt_manager_init(&mqtt_config);
 
     // events' handlers binding
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, serial_logger_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, mqtt_publish_handler, (void*) mqtt_client));
+    ESP_ERROR_CHECK(esp_event_handler_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, mqtt_sender, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(MQTT_MANAGER_EVENTS, MQTT_EVENT_NEW_MESSAGE, mqtt_recipient, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(PIR_EVENT, ESP_EVENT_ANY_ID, sound_led_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(PIR_EVENT, ESP_EVENT_ANY_ID, deep_sleep_handler, NULL));
 
