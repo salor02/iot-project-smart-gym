@@ -1,0 +1,1699 @@
+[
+    {
+        "id": "752b30f9dfdda7b1",
+        "type": "tab",
+        "label": "Environment Node Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "a3bf68ef45bf6a78",
+        "type": "tab",
+        "label": "Vision Node Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9fab3e2ddbc929c7",
+        "type": "tab",
+        "label": "Current Value Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "46df769be83e0add",
+        "type": "mqtt-broker",
+        "name": "mosquitto",
+        "broker": "mosquitto",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "cf12c7454d34e4f4",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "b8b84b8ca124055f",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094ce",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "280c7c535e531c1c",
+        "type": "ui-page",
+        "name": "Environment Sensors",
+        "ui": "cf12c7454d34e4f4",
+        "path": "/environment-sensors",
+        "icon": "thermometer ",
+        "layout": "grid",
+        "theme": "b8b84b8ca124055f",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 2,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "b29515e305cc0e4b",
+        "type": "ui-group",
+        "name": "Sensors Graphs",
+        "page": "280c7c535e531c1c",
+        "width": "12",
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "c11ce6b77d42c891",
+        "type": "ui-group",
+        "name": "Sensors Gauges",
+        "page": "280c7c535e531c1c",
+        "width": "12",
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "558d6c9bfef04e7f",
+        "type": "ui-page",
+        "name": "Vision Node",
+        "ui": "cf12c7454d34e4f4",
+        "path": "/vision-node",
+        "icon": "eye",
+        "layout": "grid",
+        "theme": "b8b84b8ca124055f",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "da4af9af79e46f2b",
+        "type": "ui-group",
+        "name": "Node Commands",
+        "page": "558d6c9bfef04e7f",
+        "width": 6,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "61dd3aa08b691c34",
+        "type": "ui-group",
+        "name": "Exercises List",
+        "page": "558d6c9bfef04e7f",
+        "width": "12",
+        "height": 1,
+        "order": 3,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "7254903e072de1d9",
+        "type": "ui-group",
+        "name": "Current Consumption",
+        "page": "558d6c9bfef04e7f",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "064e0ea2811465a0",
+        "type": "mqtt in",
+        "z": "752b30f9dfdda7b1",
+        "name": "",
+        "topic": "sensors/environment",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 180,
+        "wires": [
+            [
+                "f377b906ec8a1521",
+                "7f979475aa6ac9ac",
+                "34c6b194eec3db84",
+                "00a0d245a8ae4099",
+                "9d8f25301a99c781",
+                "488304f574edbb94",
+                "df2a9d83aa455016",
+                "d6d109f47b0b4411"
+            ]
+        ]
+    },
+    {
+        "id": "f377b906ec8a1521",
+        "type": "ui-chart",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "co",
+        "label": "Carbon Monoxide Concentration",
+        "order": 4,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "{HH}:{mm}:{ss}",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "ppm",
+        "yAxisProperty": "payload.co",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "500",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "86400",
+        "removeOlderPoints": "",
+        "colors": [
+            "#e01b24",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 430,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7f979475aa6ac9ac",
+        "type": "ui-chart",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "air",
+        "label": "Air Quality",
+        "order": 5,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "{HH}:{mm}:{ss}",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "ppm",
+        "yAxisProperty": "payload.air",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "500",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "86400",
+        "removeOlderPoints": "",
+        "colors": [
+            "#e01b24",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 430,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bfbc889b4d7ccb44",
+        "type": "ui-chart",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "temp",
+        "label": "Temperature",
+        "order": 2,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "{HH}:{mm}:{ss}",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "°C",
+        "yAxisProperty": "payload",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "40",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "86400",
+        "removeOlderPoints": "",
+        "colors": [
+            "#e01b24",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": "6",
+        "height": "8",
+        "className": "",
+        "interpolation": "linear",
+        "x": 570,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "34c6b194eec3db84",
+        "type": "ui-chart",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "humidity",
+        "label": "Humidity",
+        "order": 3,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "{HH}:{mm}:{ss}",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "humidity",
+        "yAxisProperty": "payload.humidity",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "100",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "86400",
+        "removeOlderPoints": "",
+        "colors": [
+            "#e01b24",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 440,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a8302e7f864afd0c",
+        "type": "mqtt in",
+        "z": "752b30f9dfdda7b1",
+        "name": "",
+        "topic": "sensors/air_quality",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 500,
+        "wires": [
+            [
+                "a941a2d6867dd8b6",
+                "de5454a074e9e28f",
+                "6dd092897920e148",
+                "fa6ba79fa66055f2"
+            ]
+        ]
+    },
+    {
+        "id": "c5e9cb564e27aeab",
+        "type": "mqtt in",
+        "z": "752b30f9dfdda7b1",
+        "name": "",
+        "topic": "sensors/pir",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 220,
+        "y": 680,
+        "wires": [
+            [
+                "f55bc296306070f4"
+            ]
+        ]
+    },
+    {
+        "id": "f55bc296306070f4",
+        "type": "debug",
+        "z": "752b30f9dfdda7b1",
+        "name": "pir status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 440,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "00a0d245a8ae4099",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "temp",
+        "group": "c11ce6b77d42c891",
+        "order": 1,
+        "value": "payload.temp",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperature",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "C°",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#3584e4",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "15",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "25",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "35",
+        "sizeThickness": "16",
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9d8f25301a99c781",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "humidity",
+        "group": "c11ce6b77d42c891",
+        "order": 3,
+        "value": "payload.humidity",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Humidity",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "%",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#3584e4",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "40",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "60",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 440,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a941a2d6867dd8b6",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "pm1.0",
+        "group": "c11ce6b77d42c891",
+        "order": 6,
+        "value": "payload.pm1_0",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "PM1.0 Concentration",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "μg/m3",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "11",
+                "color": "#f6d32d",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "25",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "125",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "de5454a074e9e28f",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "pm2.5",
+        "group": "c11ce6b77d42c891",
+        "order": 7,
+        "value": "payload.pm2_5",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "PM2.5 Concentration",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "μg/m3",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "16",
+                "color": "#f6d32d",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "36",
+                "color": "#ff7800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "55",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "125",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6dd092897920e148",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "pm10",
+        "group": "c11ce6b77d42c891",
+        "order": 8,
+        "value": "payload.pm10",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "PM10 Concentration",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "μg/m3",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "46",
+                "color": "#f6d32d",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "151",
+                "color": "#f66151",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "200",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "488304f574edbb94",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "co",
+        "group": "c11ce6b77d42c891",
+        "order": 5,
+        "value": "payload.co",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Carbon Monoxide Concentration",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "ppm",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "10",
+                "color": "#f6d32d",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "36",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "200",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "df2a9d83aa455016",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "air",
+        "group": "c11ce6b77d42c891",
+        "order": 4,
+        "value": "payload.air",
+        "valueType": "msg",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Air Quality",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "ppm",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "101",
+                "color": "#f6d32d",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "301",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "500",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 430,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d7c6f5ab36685977",
+        "type": "ui-button",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "reset",
+        "label": "Reset Graphs",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "[]",
+        "payloadType": "json",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 110,
+        "y": 240,
+        "wires": [
+            [
+                "f377b906ec8a1521",
+                "7f979475aa6ac9ac",
+                "34c6b194eec3db84",
+                "bfbc889b4d7ccb44",
+                "84e8927538ec18e5"
+            ]
+        ]
+    },
+    {
+        "id": "fa6ba79fa66055f2",
+        "type": "function",
+        "z": "752b30f9dfdda7b1",
+        "name": "prepare pm data",
+        "func": "var pm1 = {\n    topic: \"PM 1.0\",\n    payload: msg.payload.pm1_0\n};\n\nvar pm2_5 = {\n    topic: \"PM 2.5\",\n    payload: msg.payload.pm2_5\n};\n\nvar pm10 = {\n    topic: \"PM 10\",\n    payload: msg.payload.pm10\n};\n\nreturn [[pm1, pm2_5, pm10]];\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 240,
+        "y": 440,
+        "wires": [
+            [
+                "84e8927538ec18e5"
+            ]
+        ]
+    },
+    {
+        "id": "84e8927538ec18e5",
+        "type": "ui-chart",
+        "z": "752b30f9dfdda7b1",
+        "group": "b29515e305cc0e4b",
+        "name": "pm graph",
+        "label": "Particulate Matter Concentration",
+        "order": 6,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "{HH}:{mm}:{ss}",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "μg/m3",
+        "yAxisProperty": "payload",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "300",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": "12",
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "",
+        "colors": [
+            "#e01b24",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": "12",
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 440,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d6d109f47b0b4411",
+        "type": "function",
+        "z": "752b30f9dfdda7b1",
+        "name": "calc heat index",
+        "func": "let temp = msg.payload.temp;\nlet hum = msg.payload.humidity;\n\n// The NOAA Rothfusz regression equation requires temperature in Fahrenheit\nlet tempF = (temp * 9/5) + 32;\n\n// Calculate the Apparent Temperature (Heat Index)\nlet heatIndexF = 0;\n\n// First, compute the simple Heat Index (used for lower temperatures)\nlet simpleHI = 0.5 * (tempF + 61.0 + ((tempF - 68.0) * 1.2) + (hum * 0.094));\n\n// If the simple Heat Index is 80°F (about 27°C) or higher, use the full Rothfusz regression equation\n// see https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml\nif (simpleHI >= 80) {\n    heatIndexF = -42.379 + (2.04901523 * tempF) + (10.14333127 * hum) \n        - (0.22475541 * tempF * hum) - (0.00683783 * tempF * tempF) \n        - (0.05481717 * hum * hum) + (0.00122874 * tempF * tempF * hum) \n        + (0.00085282 * tempF * hum * hum) - (0.00000199 * tempF * tempF * hum * hum);\n    \n    // Adjustments based on specific humidity and temperature ranges\n    if (hum < 13 && tempF >= 80 && tempF <= 112) {\n        let adjustment = ((13 - hum) / 4) * Math.sqrt((17 - Math.abs(tempF - 95)) / 17);\n        heatIndexF -= adjustment;\n    } else if (hum > 85 && tempF >= 80 && tempF <= 87) {\n        let adjustment = ((hum - 85) / 10) * ((87 - tempF) / 5);\n        heatIndexF += adjustment;\n    }\n} else {\n    // For cooler environments (like a winter garage), the simple formula is sufficient\n    heatIndexF = simpleHI;\n}\n\n// Convert back to Celsius for dashboard visualization\nlet heatIndexC = ((heatIndexF - 32) * 5/9).toFixed(2); \n\nglobal.set(\"heat_index\", heatIndexC);\n\nvar actual_temp = {\n    payload: temp,\n    topic: \"Actual Temperature\"\n};\n\nvar feels_like = {\n    payload: heatIndexC,\n    topic: \"Feels Like\"\n};\n\nreturn [[actual_temp, feels_like]];\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 180,
+        "wires": [
+            [
+                "c19f05a7636d287e",
+                "bfbc889b4d7ccb44"
+            ]
+        ]
+    },
+    {
+        "id": "c19f05a7636d287e",
+        "type": "ui-gauge",
+        "z": "752b30f9dfdda7b1",
+        "name": "heat index",
+        "group": "c11ce6b77d42c891",
+        "order": 2,
+        "value": "heat_index",
+        "valueType": "global",
+        "width": "3",
+        "height": "3",
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Heat Index",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "C°",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#3584e4",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "15",
+                "color": "#33d17a",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "25",
+                "color": "#e01b24",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "40",
+        "sizeThickness": "16",
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 670,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a732a236f102e05f",
+        "type": "ui-button",
+        "z": "a3bf68ef45bf6a78",
+        "group": "da4af9af79e46f2b",
+        "name": "ota update start",
+        "label": "Start OTA update",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "start",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 180,
+        "y": 80,
+        "wires": [
+            [
+                "9145a572f97fa75b"
+            ]
+        ]
+    },
+    {
+        "id": "9145a572f97fa75b",
+        "type": "mqtt out",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/ota",
+        "qos": "1",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "46df769be83e0add",
+        "x": 420,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "6d53e4bf2c22ca70",
+        "type": "mqtt in",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/status",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 420,
+        "wires": [
+            [
+                "0898665ad786061a",
+                "1f8dd990e19c9c9e"
+            ]
+        ]
+    },
+    {
+        "id": "1308287e144befb3",
+        "type": "mqtt in",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/ota",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 540,
+        "wires": [
+            [
+                "9ca06bc01a9eedd6"
+            ]
+        ]
+    },
+    {
+        "id": "9ca06bc01a9eedd6",
+        "type": "debug",
+        "z": "a3bf68ef45bf6a78",
+        "name": "ota status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 340,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "a3202bce7e310b1e",
+        "type": "ui-button",
+        "z": "a3bf68ef45bf6a78",
+        "group": "da4af9af79e46f2b",
+        "name": "start recording",
+        "label": "Start recording",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "start_rec",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 180,
+        "y": 120,
+        "wires": [
+            [
+                "3af0fcb84e3a2422"
+            ]
+        ]
+    },
+    {
+        "id": "0f128740c08a15b9",
+        "type": "ui-button",
+        "z": "a3bf68ef45bf6a78",
+        "group": "da4af9af79e46f2b",
+        "name": "stop recording",
+        "label": "Stop recording",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "stop_rec",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 180,
+        "y": 160,
+        "wires": [
+            [
+                "3af0fcb84e3a2422"
+            ]
+        ]
+    },
+    {
+        "id": "3af0fcb84e3a2422",
+        "type": "mqtt out",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/cmd",
+        "qos": "1",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "46df769be83e0add",
+        "x": 430,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "8ed6b5726e0fa98e",
+        "type": "mqtt in",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/sessions",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "1f8dd990e19c9c9e",
+                "214fa20d09b458b3"
+            ]
+        ]
+    },
+    {
+        "id": "1f8dd990e19c9c9e",
+        "type": "debug",
+        "z": "a3bf68ef45bf6a78",
+        "name": "vision status",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 370,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "214fa20d09b458b3",
+        "type": "function",
+        "z": "a3bf68ef45bf6a78",
+        "name": "recorded exercises history",
+        "func": "let history = flow.get(\"exercise_history\") || [];\n\nif(msg.payload == \"\"){\n    flow.set(\"exercise_history\", null);\n    return msg;\n}\n\nlet video_name = msg.payload.rec_path.split(\"/\").pop();\n\nlet heat_index = global.get(\"heat_index\");\n\n// MET values are estimated based on resistance training standards\nlet exercise = msg.payload.exercise;\nlet met_value = 0;\nif (exercise === \"Squat\") {\n    met_value = 5.0;  // High compound movement, heavy systemic load\n} else if (exercise === \"Romanian Deadlift\") {\n    met_value = 4.5;  // Heavy posterior chain compound movement\n} else if (exercise === \"Lateral Raise\") {\n    met_value = 2.5;  // Small muscle isolation, low systemic load\n} else if (exercise === \"Bicep Curl\") {\n    met_value = 2.8;  // Small muscle isolation, slightly higher load than lateral raises\n}\n\nlet fatique_multiplier = 1.0 + (Math.sqrt(msg.payload.reps) - 1.0) * 0.5;\nlet stress_index = (heat_index * met_value * fatique_multiplier) / 4.8;\nnode.warn(met_value);\n\nlet incoming = {\n    \"time\": msg.payload.timestamp,\n    \"exercise\": msg.payload.exercise,\n    \"reps\": msg.payload.reps,\n    \"stress_index\": Math.round(stress_index),\n    \"rec_url\": \"http://192.168.1.253:1880/recordings/\"+video_name\n};\n\n// Update the first row if the received payload is relative to the current exercise\nif (history.length > 0 && history[0].exercise === incoming.exercise && history[0].reps < incoming.reps) {\n    history[0].reps = incoming.reps;\n    history[0].stress_index = incoming.stress_index;\n} else {\n    history.unshift(incoming);\n\n    if (history.length > 20) {\n        history = history.slice(0, 20);\n    }\n}\n\nflow.set(\"exercise_history\", history);\nmsg.payload = history;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 260,
+        "wires": [
+            [
+                "7fa1c30efdb013b6"
+            ]
+        ]
+    },
+    {
+        "id": "7fa1c30efdb013b6",
+        "type": "ui-table",
+        "z": "a3bf68ef45bf6a78",
+        "group": "61dd3aa08b691c34",
+        "name": "exercises list",
+        "label": "",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "maxrows": "20",
+        "passthru": false,
+        "autocols": false,
+        "showSearch": false,
+        "deselect": true,
+        "selectionType": "none",
+        "columns": [
+            {
+                "title": "Time",
+                "key": "time",
+                "keyType": "key",
+                "type": "text",
+                "width": "",
+                "align": "start"
+            },
+            {
+                "title": "Exercise",
+                "key": "exercise",
+                "keyType": "key",
+                "type": "text",
+                "width": "",
+                "align": "start"
+            },
+            {
+                "title": "Reps",
+                "key": "reps",
+                "keyType": "key",
+                "type": "text",
+                "width": "",
+                "align": "start"
+            },
+            {
+                "title": "Stress Index",
+                "key": "stress_index",
+                "keyType": "key",
+                "type": "text",
+                "width": "",
+                "align": "start"
+            },
+            {
+                "title": "Recording URL",
+                "key": "rec_url",
+                "keyType": "key",
+                "type": "link",
+                "width": "",
+                "align": "start"
+            }
+        ],
+        "mobileBreakpoint": "sm",
+        "mobileBreakpointType": "defaults",
+        "action": "replace",
+        "className": "",
+        "x": 850,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0898665ad786061a",
+        "type": "ui-text",
+        "z": "a3bf68ef45bf6a78",
+        "group": "da4af9af79e46f2b",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "vision status",
+        "label": "Vision Node Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 370,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "92848baf84acb2f8",
+        "type": "mqtt in",
+        "z": "a3bf68ef45bf6a78",
+        "name": "",
+        "topic": "vision/tracker_state",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 480,
+        "wires": [
+            [
+                "463850c3595a0b68"
+            ]
+        ]
+    },
+    {
+        "id": "463850c3595a0b68",
+        "type": "ui-text",
+        "z": "a3bf68ef45bf6a78",
+        "group": "da4af9af79e46f2b",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "tracker state",
+        "label": "Tracker State",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 370,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "31164e38e9506915",
+        "type": "ui-button",
+        "z": "a3bf68ef45bf6a78",
+        "group": "61dd3aa08b691c34",
+        "name": "reset history",
+        "label": "Reset History",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 430,
+        "y": 320,
+        "wires": [
+            [
+                "214fa20d09b458b3"
+            ]
+        ]
+    },
+    {
+        "id": "369e605174e6d04a",
+        "type": "mqtt in",
+        "z": "9fab3e2ddbc929c7",
+        "name": "",
+        "topic": "sensors/ina219",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "46df769be83e0add",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 100,
+        "wires": [
+            [
+                "79a6d5a33c07e6d3"
+            ]
+        ]
+    },
+    {
+        "id": "79a6d5a33c07e6d3",
+        "type": "ui-chart",
+        "z": "9fab3e2ddbc929c7",
+        "group": "7254903e072de1d9",
+        "name": "current consumption vision node",
+        "label": "Current Consumption",
+        "order": 1,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "time",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "mA",
+        "yAxisProperty": "payload.current_mA",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "350",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "false",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "200",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": "5",
+        "className": "",
+        "interpolation": "linear",
+        "x": 470,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "75c73341ab1ffe1a",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "@flowfuse/node-red-dashboard": "1.30.2"
+        }
+    }
+]
