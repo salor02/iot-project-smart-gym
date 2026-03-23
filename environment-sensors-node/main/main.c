@@ -183,6 +183,7 @@ static void mqtt_recipient(void* handler_args, esp_event_base_t base, int32_t id
     }
 }
 
+// this function manages the deep sleep function in order to turn on/off the vision node
 void deep_sleep_handler(void* handler_args, esp_event_base_t base, int32_t id, void* event_data){
     if(base == PIR_EVENT){
         switch(id){

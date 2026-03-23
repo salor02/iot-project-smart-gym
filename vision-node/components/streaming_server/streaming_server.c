@@ -1,3 +1,6 @@
+/*
+    code from https://github.com/espressif/esp32-camera esp32-camera example
+*/
 #include "streaming_server.h"
 #include "camera_manager.h"
 #include "esp_camera.h"
@@ -32,6 +35,7 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
         return res;
     }
 
+    // an event is raised when the streaming starts
     esp_event_post(STREAMING_SERVER_EVENTS, STREAMING_SERVER_RECORDING_START, NULL, 0, portMAX_DELAY);
 
     while(true){
@@ -77,6 +81,7 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
 
         if (res != ESP_OK) {
             ESP_LOGI(TAG, "Client disconnected, closing stream");
+            // an event is raised when the streaming stops (by disconnection from the client)
             esp_event_post(STREAMING_SERVER_EVENTS, STREAMING_SERVER_RECORDING_STOP, NULL, 0, portMAX_DELAY);
             break;
         }
@@ -103,6 +108,7 @@ esp_err_t stream_server_init(void){
 
     httpd_start(&s_server, &config);
 
+    // the stream is reachable from the /stream endpoint
     httpd_uri_t stream_uri = {
         .uri     = "/stream",
         .method  = HTTP_GET,

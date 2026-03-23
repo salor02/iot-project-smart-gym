@@ -20,11 +20,13 @@ static const char *TAG = "mqtt";
 static esp_mqtt_client_handle_t client = NULL;
 static mqtt_manager_config_t mqtt_manager_cfg;
 
+// called everytime the mqtt client receives a new event
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data){
 
     esp_mqtt_event_handle_t event = event_data;
 
     switch ((esp_mqtt_event_id_t)event_id){
+        // handle the connection established event and subscribe to the given topics
         case MQTT_EVENT_CONNECTED:{
             ESP_LOGI(TAG, "MQTT connection established");
 
@@ -36,7 +38,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             }
             break;
         }
-
+        
+        // when a new message is received, an event is raised containing the received message
         case MQTT_EVENT_DATA:{
             mqtt_msg_t msg = {0};
             snprintf(msg.topic, sizeof(msg.topic), "%.*s", event->topic_len, event->topic);
@@ -51,12 +54,14 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
+// public a given message in a given payload
 void mqtt_manager_publish(const char *topic, const char *payload) {
     if (client != NULL) {
         esp_mqtt_client_publish(client, topic, payload, 0, 1, 0);
     }
 }
 
+// mqtt client initialization
 void mqtt_manager_init(const mqtt_manager_config_t *config){
     mqtt_manager_cfg = *config;
 
