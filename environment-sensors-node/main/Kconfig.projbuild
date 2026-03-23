@@ -39,7 +39,7 @@ menu "GPIO Mapping"
         default 4
     
     config LED_GPIO
-        int "PIR GPIO number"
+        int "LED GPIO number"
         default 5
 
     config PMS_UART_PORT
