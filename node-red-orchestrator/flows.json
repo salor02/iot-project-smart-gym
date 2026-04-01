@@ -249,17 +249,10 @@
         "rh": 0,
         "inputs": 0,
         "x": 130,
-        "y": 180,
+        "y": 120,
         "wires": [
             [
-                "f377b906ec8a1521",
-                "7f979475aa6ac9ac",
-                "34c6b194eec3db84",
-                "00a0d245a8ae4099",
-                "9d8f25301a99c781",
-                "488304f574edbb94",
-                "df2a9d83aa455016",
-                "d6d109f47b0b4411"
+                "3dd438975360bd1c"
             ]
         ]
     },
@@ -319,8 +312,8 @@
         "height": 8,
         "className": "",
         "interpolation": "linear",
-        "x": 430,
-        "y": 100,
+        "x": 730,
+        "y": 160,
         "wires": [
             []
         ]
@@ -381,8 +374,8 @@
         "height": 8,
         "className": "",
         "interpolation": "linear",
-        "x": 430,
-        "y": 140,
+        "x": 730,
+        "y": 200,
         "wires": [
             []
         ]
@@ -443,8 +436,8 @@
         "height": "8",
         "className": "",
         "interpolation": "linear",
-        "x": 570,
-        "y": 240,
+        "x": 910,
+        "y": 280,
         "wires": [
             []
         ]
@@ -505,8 +498,8 @@
         "height": 8,
         "className": "",
         "interpolation": "linear",
-        "x": 440,
-        "y": 60,
+        "x": 740,
+        "y": 120,
         "wires": [
             []
         ]
@@ -524,8 +517,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 130,
-        "y": 500,
+        "x": 170,
+        "y": 440,
         "wires": [
             [
                 "a941a2d6867dd8b6",
@@ -548,8 +541,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 220,
-        "y": 680,
+        "x": 260,
+        "y": 620,
         "wires": [
             [
                 "f55bc296306070f4"
@@ -569,8 +562,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 440,
-        "y": 680,
+        "x": 480,
+        "y": 620,
         "wires": []
     },
     {
@@ -621,8 +614,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 260,
+        "x": 730,
+        "y": 320,
         "wires": [
             []
         ]
@@ -675,8 +668,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 440,
-        "y": 300,
+        "x": 740,
+        "y": 360,
         "wires": [
             []
         ]
@@ -729,8 +722,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 500,
+        "x": 470,
+        "y": 440,
         "wires": [
             []
         ]
@@ -789,8 +782,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 540,
+        "x": 470,
+        "y": 480,
         "wires": [
             []
         ]
@@ -843,8 +836,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 580,
+        "x": 470,
+        "y": 520,
         "wires": [
             []
         ]
@@ -897,8 +890,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 340,
+        "x": 730,
+        "y": 400,
         "wires": [
             []
         ]
@@ -951,8 +944,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 430,
-        "y": 380,
+        "x": 730,
+        "y": 440,
         "wires": [
             []
         ]
@@ -988,8 +981,8 @@
         "enablePointerup": false,
         "pointerupPayload": "",
         "pointerupPayloadType": "str",
-        "x": 110,
-        "y": 240,
+        "x": 290,
+        "y": 280,
         "wires": [
             [
                 "f377b906ec8a1521",
@@ -1012,8 +1005,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 240,
-        "y": 440,
+        "x": 280,
+        "y": 380,
         "wires": [
             [
                 "84e8927538ec18e5"
@@ -1076,8 +1069,8 @@
         "height": 8,
         "className": "",
         "interpolation": "linear",
-        "x": 440,
-        "y": 440,
+        "x": 480,
+        "y": 380,
         "wires": [
             []
         ]
@@ -1087,15 +1080,15 @@
         "type": "function",
         "z": "752b30f9dfdda7b1",
         "name": "calc heat index",
-        "func": "let temp = msg.payload.temp;\nlet hum = msg.payload.humidity;\n\n// The NOAA Rothfusz regression equation requires temperature in Fahrenheit\nlet tempF = (temp * 9/5) + 32;\n\n// Calculate the Apparent Temperature (Heat Index)\nlet heatIndexF = 0;\n\n// First, compute the simple Heat Index (used for lower temperatures)\nlet simpleHI = 0.5 * (tempF + 61.0 + ((tempF - 68.0) * 1.2) + (hum * 0.094));\n\n// If the simple Heat Index is 80°F (about 27°C) or higher, use the full Rothfusz regression equation\n// see https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml\nif (simpleHI >= 80) {\n    heatIndexF = -42.379 + (2.04901523 * tempF) + (10.14333127 * hum) \n        - (0.22475541 * tempF * hum) - (0.00683783 * tempF * tempF) \n        - (0.05481717 * hum * hum) + (0.00122874 * tempF * tempF * hum) \n        + (0.00085282 * tempF * hum * hum) - (0.00000199 * tempF * tempF * hum * hum);\n    \n    // Adjustments based on specific humidity and temperature ranges\n    if (hum < 13 && tempF >= 80 && tempF <= 112) {\n        let adjustment = ((13 - hum) / 4) * Math.sqrt((17 - Math.abs(tempF - 95)) / 17);\n        heatIndexF -= adjustment;\n    } else if (hum > 85 && tempF >= 80 && tempF <= 87) {\n        let adjustment = ((hum - 85) / 10) * ((87 - tempF) / 5);\n        heatIndexF += adjustment;\n    }\n} else {\n    // For cooler environments (like a winter garage), the simple formula is sufficient\n    heatIndexF = simpleHI;\n}\n\n// Convert back to Celsius for dashboard visualization\nlet heatIndexC = ((heatIndexF - 32) * 5/9).toFixed(2); \n\nglobal.set(\"heat_index\", heatIndexC);\n\nvar actual_temp = {\n    payload: temp,\n    topic: \"Actual Temperature\"\n};\n\nvar feels_like = {\n    payload: heatIndexC,\n    topic: \"Feels Like\"\n};\n\nreturn [[actual_temp, feels_like]];\n",
+        "func": "if (!msg.payload.temp || !msg.payload.humidity) {\n    return null;\n}\n\nlet temp = msg.payload.temp;\nlet hum = msg.payload.humidity;\n\n// The NOAA Rothfusz regression equation requires temperature in Fahrenheit\nlet tempF = (temp * 9/5) + 32;\n\n// Calculate the Apparent Temperature (Heat Index)\nlet heatIndexF = 0;\n\n// First, compute the simple Heat Index (used for lower temperatures)\nlet simpleHI = 0.5 * (tempF + 61.0 + ((tempF - 68.0) * 1.2) + (hum * 0.094));\n\n// If the simple Heat Index is 80°F (about 27°C) or higher, use the full Rothfusz regression equation\n// see https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml\nif (simpleHI >= 80) {\n    heatIndexF = -42.379 + (2.04901523 * tempF) + (10.14333127 * hum) \n        - (0.22475541 * tempF * hum) - (0.00683783 * tempF * tempF) \n        - (0.05481717 * hum * hum) + (0.00122874 * tempF * tempF * hum) \n        + (0.00085282 * tempF * hum * hum) - (0.00000199 * tempF * tempF * hum * hum);\n    \n    // Adjustments based on specific humidity and temperature ranges\n    if (hum < 13 && tempF >= 80 && tempF <= 112) {\n        let adjustment = ((13 - hum) / 4) * Math.sqrt((17 - Math.abs(tempF - 95)) / 17);\n        heatIndexF -= adjustment;\n    } else if (hum > 85 && tempF >= 80 && tempF <= 87) {\n        let adjustment = ((hum - 85) / 10) * ((87 - tempF) / 5);\n        heatIndexF += adjustment;\n    }\n} else {\n    // For cooler environments (like a winter garage), the simple formula is sufficient\n    heatIndexF = simpleHI;\n}\n\n// Convert back to Celsius for dashboard visualization\nlet heatIndexC = ((heatIndexF - 32) * 5/9).toFixed(2); \n\nglobal.set(\"heat_index\", heatIndexC);\n\nvar actual_temp = {\n    payload: temp,\n    topic: \"Actual Temperature\"\n};\n\nvar feels_like = {\n    payload: heatIndexC,\n    topic: \"Feels Like\"\n};\n\nreturn [[actual_temp, feels_like]];\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 420,
-        "y": 180,
+        "x": 760,
+        "y": 240,
         "wires": [
             [
                 "c19f05a7636d287e",
@@ -1151,10 +1144,37 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 670,
-        "y": 180,
+        "x": 930,
+        "y": 200,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "3dd438975360bd1c",
+        "type": "function",
+        "z": "752b30f9dfdda7b1",
+        "name": "sanitizer",
+        "func": "if (!msg.payload.temp_valid) delete msg.payload.temp;\nif (!msg.payload.humidity_valid) delete msg.payload.humidity;\nif (!msg.payload.co_valid) delete msg.payload.co;\nif (!msg.payload.air_valid) delete msg.payload.air;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 120,
+        "wires": [
+            [
+                "34c6b194eec3db84",
+                "f377b906ec8a1521",
+                "7f979475aa6ac9ac",
+                "d6d109f47b0b4411",
+                "00a0d245a8ae4099",
+                "9d8f25301a99c781",
+                "488304f574edbb94",
+                "df2a9d83aa455016"
+            ]
         ]
     },
     {
@@ -1689,7 +1709,7 @@
         ]
     },
     {
-        "id": "75c73341ab1ffe1a",
+        "id": "98c889f9d02f3a3b",
         "type": "global-config",
         "env": [],
         "modules": {
