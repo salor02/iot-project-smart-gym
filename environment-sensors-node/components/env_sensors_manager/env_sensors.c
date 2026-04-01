@@ -119,40 +119,60 @@ void env_sensors_task(void *pvParameters){
     ma_init(&air_filter, air_buf, CONFIG_ENV_SAMPLE_SIZE);
 
     while (1) {
-        env_data_t env_data_raw;
-        env_data_t env_data_filtered;
+        env_data_t env_data_raw = {0};
+        env_data_t env_data_filtered = {0};
         esp_err_t err;
 
         // SHT31 reading
-        sht3x_measure(&dev, &env_data_raw.temp, &env_data_raw.humidity);
+        err = sht3x_measure(&dev, &env_data_raw.temp, &env_data_raw.humidity);
+        if (err == ESP_OK) {
+            env_data_raw.temp_valid = true;
+            env_data_raw.humidity_valid = true;
+        } else {
+            ESP_LOGW(TAG, "sht3x read failed: %s", esp_err_to_name(err));
+        }
 
-        int mq7_raw, mq135_raw;
+        int mq7_raw = 0;
+        int mq135_raw = 0;
 
         // gas sensors reading (ADC)
         err = adc_oneshot_read(adc_handle, MQ7_ADC_CHANNEL, &mq7_raw);
-        if(err != ESP_OK){
+        if (err == ESP_OK) {
+            env_data_raw.mq7_val = calculate_ppm(mq7_raw, MQ7_R0, 99.04f, -1.518f);
+            env_data_raw.mq7_valid = true;
+        } else {
             ESP_LOGW(TAG, "adc mq7 read failed: %s", esp_err_to_name(err));
-            continue;
         }
+
         err = adc_oneshot_read(adc_handle, MQ135_ADC_CHANNEL, &mq135_raw);
-        if(err != ESP_OK){
+        if (err == ESP_OK) {
+            env_data_raw.mq135_val = calculate_ppm(mq135_raw, MQ135_R0, 110.47f, -2.86f);
+            env_data_raw.mq135_valid = true;
+        } else {
             ESP_LOGW(TAG, "adc mq135 read failed: %s", esp_err_to_name(err));
-            continue;
         }
 
-        // get PPM (MQ7: a=99.04, b=-1.518 | MQ135: a=110.47, b=-2.86)
-        env_data_raw.mq7_val = calculate_ppm(mq7_raw, MQ7_R0, 99.04f, -1.518f);
-        env_data_raw.mq135_val = calculate_ppm(mq135_raw, MQ135_R0, 110.47f, -2.86f);
-
-        // the raw data read by the sensors are now filtered by the moving avarage update step
-        env_data_filtered.temp = ma_update(&temp_filter, env_data_raw.temp);
-        env_data_filtered.humidity = ma_update(&humidity_filter, env_data_raw.humidity);
-        env_data_filtered.mq7_val = ma_update(&co_filter, env_data_raw.mq7_val);
-        env_data_filtered.mq135_val = ma_update(&air_filter, env_data_raw.mq135_val);
+        // update the moving average only with valid samples
+        if (env_data_raw.temp_valid) {
+            env_data_filtered.temp = ma_update(&temp_filter, env_data_raw.temp);
+            env_data_filtered.temp_valid = true;
+        }
+        if (env_data_raw.humidity_valid) {
+            env_data_filtered.humidity = ma_update(&humidity_filter, env_data_raw.humidity);
+            env_data_filtered.humidity_valid = true;
+        }
+        if (env_data_raw.mq7_valid) {
+            env_data_filtered.mq7_val = (int)ma_update(&co_filter, (float)env_data_raw.mq7_val);
+            env_data_filtered.mq7_valid = true;
+        }
+        if (env_data_raw.mq135_valid) {
+            env_data_filtered.mq135_val = (int)ma_update(&air_filter, (float)env_data_raw.mq135_val);
+            env_data_filtered.mq135_valid = true;
+        }
 
         /*
-            Raise the data ready event, if the event queue is full return an error. 
-            Please note: if there was an error during the reading of the MQx sensors, this event will not be raised.
+            Raise the data ready event even if one or more sensor readings failed.
+            Invalid fields are marked through the *_valid flags.
         */
         err = esp_event_post(ENV_SENSORS_EVENT, EVENT_ENV_DATA_READY, &env_data_filtered, sizeof(env_data_filtered), 0);
         if(err != ESP_OK){
@@ -160,7 +180,11 @@ void env_sensors_task(void *pvParameters){
             continue;
         }
 
-        ESP_LOGI(TAG, "environment sensors EVENT_ENV_DATA_READY sent");
+        ESP_LOGI(TAG, "environment sensors EVENT_ENV_DATA_READY sent (temp=%d humidity=%d mq7=%d mq135=%d)",
+            env_data_filtered.temp_valid,
+            env_data_filtered.humidity_valid,
+            env_data_filtered.mq7_valid,
+            env_data_filtered.mq135_valid);
         
         vTaskDelay(pdMS_TO_TICKS(10000));
     }

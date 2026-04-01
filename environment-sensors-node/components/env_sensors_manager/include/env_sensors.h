@@ -1,14 +1,19 @@
 #pragma once
 #include <stdio.h>
+#include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
 // message struct for environmental data
 typedef struct{
     float temp;
+    bool temp_valid;
     float humidity;
+    bool humidity_valid;
     int mq7_val;
+    bool mq7_valid;
     int mq135_val;
+    bool mq135_valid;
 } env_data_t;
 
 // events' family declaration

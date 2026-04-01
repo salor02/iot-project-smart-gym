@@ -97,8 +97,30 @@ void serial_logger_handler(void* handler_args, esp_event_base_t base, int32_t id
             case EVENT_ENV_DATA_READY: {
                 env_data_t *env_data = (env_data_t*) event_data;
                 printf(" ----- ENVIRONMENT data begin ----- \n");
-                printf("Temperature: %.2f °C, Humidity: %.2f %%\n", env_data->temp, env_data->humidity);
-                printf("MQ-7 (CO): %d | MQ-135 (Air): %d\n", env_data->mq7_val, env_data->mq135_val);
+                if (env_data->temp_valid) {
+                    printf("Temperature: %.2f °C\n", env_data->temp);
+                } else {
+                    printf("Temperature: not available\n");
+                }
+
+                if (env_data->humidity_valid) {
+                    printf("Humidity: %.2f %%\n", env_data->humidity);
+                } else {
+                    printf("Humidity: not available\n");
+                }
+
+                if (env_data->mq7_valid) {
+                    printf("MQ-7 (CO): %d\n", env_data->mq7_val);
+                } else {
+                    printf("MQ-7 (CO): not available\n");
+                }
+
+                if (env_data->mq135_valid) {
+                    printf("MQ-135 (Air): %d\n", env_data->mq135_val);
+                } else {
+                    printf("MQ-135 (Air): not available\n");
+                }
+
                 printf(" ----- ENVIRONMENT data end ----- \n");
                 break;
             }
@@ -146,12 +168,17 @@ void mqtt_sender(void* handler_args, esp_event_base_t base, int32_t id, void* ev
         switch (id) {
             case EVENT_ENV_DATA_READY: {
                 env_data_t *env_data = (env_data_t*) event_data;
-                char json_buffer[128];
+                char json_buffer[256];
 
-                snprintf(json_buffer, sizeof(json_buffer), 
-                    "{\"temp\": %.2f, \"humidity\": %.2f, \"co\": %d, \"air\": %d}", 
-                    env_data->temp, env_data->humidity, 
-                    env_data->mq7_val, env_data->mq135_val);
+                snprintf(json_buffer, sizeof(json_buffer),
+                    "{\"temp\": %.2f, \"temp_valid\": %s, "
+                    "\"humidity\": %.2f, \"humidity_valid\": %s, "
+                    "\"co\": %d, \"co_valid\": %s, "
+                    "\"air\": %d, \"air_valid\": %s}",
+                    env_data->temp, env_data->temp_valid ? "true" : "false",
+                    env_data->humidity, env_data->humidity_valid ? "true" : "false",
+                    env_data->mq7_val, env_data->mq7_valid ? "true" : "false",
+                    env_data->mq135_val, env_data->mq135_valid ? "true" : "false");
                 
                 mqtt_manager_publish("sensors/environment", json_buffer);
                 break;
