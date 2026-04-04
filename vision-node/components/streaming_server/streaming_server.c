@@ -91,9 +91,9 @@ static esp_err_t jpg_stream_httpd_handler(httpd_req_t *req){
         last_frame = fr_end;
         frame_time /= 1000;
         float fps = frame_time > 0 ? 1000.0f / (float)frame_time : 0.0f;
-        ESP_LOGI(TAG, "MJPG: %uKB %ums (%.1ffps)",
-            (uint32_t)(jpg_buf_len/1024),
-            (uint32_t)frame_time, fps);
+        // ESP_LOGI(TAG, "MJPG: %uKB %ums (%.1ffps)",
+        //     (uint32_t)(jpg_buf_len/1024),
+        //     (uint32_t)frame_time, fps);
 
 
     }

@@ -24,7 +24,7 @@ static camera_config_t camera_config = {
     .pin_href = CAM_PIN_HREF,
     .pin_pclk = CAM_PIN_PCLK,
 
-    .xclk_freq_hz = 20000000,
+    .xclk_freq_hz = 15000000,
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
 
@@ -37,15 +37,25 @@ static camera_config_t camera_config = {
 };
 
 esp_err_t camera_init(){
-    //powerup the camera
-    gpio_set_direction(CAM_PIN_PWDN, GPIO_MODE_OUTPUT);
-    gpio_set_level(CAM_PIN_PWDN, 0);
+    ESP_LOGI(TAG, "Initializing camera for board: %s", CAM_BOARD_NAME);
+
+    // Power up the camera only when the board exposes a PWDN pin.
+    if (CAM_PIN_PWDN >= 0) {
+        gpio_set_direction(CAM_PIN_PWDN, GPIO_MODE_OUTPUT);
+        gpio_set_level(CAM_PIN_PWDN, 0);
+    }
 
     //initialize the camera
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Camera Init Failed");
         return err;
+    }
+
+    sensor_t *sensor = esp_camera_sensor_get();
+    if (sensor != NULL) {
+        sensor->set_vflip(sensor, CAM_SENSOR_VFLIP);
+        sensor->set_hmirror(sensor, CAM_SENSOR_HMIRROR);
     }
 
     return ESP_OK;

@@ -1,0 +1,15 @@
+menu "Camera Manager Configuration"
+    choice CAMERA_BOARD_MODEL
+        prompt "Camera board model"
+        default CAMERA_BOARD_ESP32_CAM_AI_THINKER
+        help
+            Select the development board used by the camera manager so the
+            correct camera pin map is compiled in.
+
+        config CAMERA_BOARD_ESP32_CAM_AI_THINKER
+            bool "ESP32-CAM AI-Thinker"
+
+        config CAMERA_BOARD_ESP32S3_EYE
+            bool "ESP32-S3-EYE"
+    endchoice
+endmenu
