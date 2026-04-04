@@ -4,6 +4,7 @@ import os
 import json
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
@@ -78,7 +79,7 @@ def extract_joints(landmarker, frame):
         return None
 
     # Just the first person is considered here, since the use case requires the presence of only one person
-    landmarks = result.pose_landmarks[0] 
+    landmarks = result.pose_landmarks[0]
     joints = {}
     for idx, name in JOINT_INDICES.items():
         lm = landmarks[idx]
@@ -88,7 +89,7 @@ def extract_joints(landmarker, frame):
             "z": round(lm.z, 4),
             "visibility": round(lm.visibility, 3),
         }
-    
+
     return joints
 
 # ----- PRODUCER -----
@@ -146,7 +147,7 @@ def frame_producer():
 # Take JPEG frames from the queue, decode them, run pose detection,
 # display them, and call the output hook
 def frame_consumer():
-    # Configure the landmark extraction. The image mode is used here since the 
+    # Configure the landmark extraction. The image mode is used here since the
     # strict real-time processing is not required and other modes would require a timestamp calculation,
     # which would be not strictly linear due to the frequent frame drop of the ESP32-CAM.
     options = PoseLandmarkerOptions(
@@ -164,9 +165,9 @@ def frame_consumer():
         frame_index = 0
 
         # Create video writer for this session
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(ZoneInfo("Europe/Rome")).strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(OUTPUT_DIR, f"exercise-{timestamp}.mp4")
-        video_writer = None 
+        video_writer = None
 
         # While the MQTT message "stop_rec" is not received
         while not stop_event.is_set():
@@ -187,10 +188,10 @@ def frame_consumer():
                 if exercise.reps > prev_reps:
                     prev_reps = exercise.reps
                     # Publish session current reps via MQTT
-                    payload = json.dumps({"exercise": exercise.exercise.name, "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+                    payload = json.dumps({"exercise": exercise.exercise.name, "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y %H:%M:%S")})
                     mqtt_client.publish("vision/sessions", payload)
                     print(f"[Consumer] Published session current stats: {payload}")
-                
+
                 if exercise.state != prev_state:
                     prev_state = exercise.state
                     payload = exercise.state
@@ -235,7 +236,7 @@ def frame_consumer():
 
     # Publish session summary via MQTT if the exercise is None (useful for debug purpose)
     if exercise.exercise is None:
-        payload = json.dumps({"exercise": "None", "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")})
+        payload = json.dumps({"exercise": "None", "reps": exercise.reps, "rec_path": video_path, "timestamp": datetime.now(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y %H:%M:%S")})
         mqtt_client.publish("vision/sessions", payload)
         print(f"[Consumer] Published session result for an invalid session: {payload}")
 
@@ -279,7 +280,7 @@ def stop_session():
     if not is_running:
         print("[Session] Not running, ignoring stop")
         return
-    
+
     print("[Session] Stopping")
     stop_event.set()
 
@@ -309,7 +310,7 @@ def main():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
-    
+
     mqtt_client = client
 
     # Create output directory for recordings
@@ -317,7 +318,7 @@ def main():
 
     print(f"[Main] Connecting to MQTT broker at {MQTT_BROKER}:{MQTT_PORT} ...")
     client.connect(MQTT_BROKER, MQTT_PORT)
-    
+
     # Start MQTT background thread
     client.loop_start()
 
